@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - AfrikDigitalo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #FF6B35;
+            --secondary: #2E4057;
+            --accent-green: #27AE60;
+            --light-bg: #F8F9FA;
+            --text: #4A5568;
+            --white: #FFFFFF;
+            --gray-light: #E2E8F0;
+        }
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .login-container {
+            background: var(--white);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 450px;
+            padding: 40px;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo i {
+            font-size: 3rem;
+            color: var(--primary);
+        }
+        .logo span {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--secondary);
+            display: block;
+            margin-top: 10px;
+        }
+        .logo .highlight { color: var(--primary); }
+        h2 {
+            text-align: center;
+            color: var(--secondary);
+            margin-bottom: 30px;
+            font-weight: 600;
+            font-size: 1.8rem;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--secondary);
+        }
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--gray-light);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #e55a2b;
+        }
+        .links {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .links a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .links a:hover {
+            text-decoration: underline;
+        }
+        .error-message {
+            color: #dc3545;
+            font-size: 0.9rem;
+            margin-top: 5px;
+            display: none;
+        }
+        .success-message {
+            color: var(--accent-green);
+            font-size: 0.9rem;
+            margin-top: 5px;
+            display: none;
+        }
+        .info-message {
+            background: #e8f4fd;
+            border-left: 4px solid #3498DB;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <i class="fas fa-globe-africa"></i>
+            <span>Afrik<span class="highlight">Digitalo</span></span>
+        </div>
+        <h2>Connexion</h2>
+        <div class="info-message" id="verifyMessage" style="display: none;">
+            <i class="fas fa-envelope"></i> Veuillez vérifier votre email avant de vous connecter.
+        </div>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" placeholder="votre@email.com" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Mot de passe</label>
+                <input type="password" id="password" placeholder="••••••••" required>
+            </div>
+            <div class="error-message" id="errorMsg"></div>
+            <button type="submit" class="btn">Se connecter</button>
+        </form>
+        <div class="links">
+            <p><a href="#" id="forgotPassword">Mot de passe oublié ?</a></p>
+            <p>Pas encore de compte ? <a href="register.html">Inscrivez-vous</a></p>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAWlhXhkaOei9RzX8hCNcCXnpjWVId_s48",
+            authDomain: "madil-be5be.firebaseapp.com",
+            projectId: "madil-be5be",
+            storageBucket: "madil-be5be.firebasestorage.app",
+            messagingSenderId: "2892375937",
+            appId: "1:2892375937:web:8d8381c7914cbd328aaa80",
+            measurementId: "G-ZKXRFQDG93"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        // Vérifier si l'utilisateur vient de s'inscrire (via paramètre URL)
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('verified') === 'true') {
+            document.getElementById('verifyMessage').style.display = 'block';
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('errorMsg');
+            errorMsg.style.display = 'none';
+
+            try {
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                if (!user.emailVerified) {
+                    // Email non vérifié
+                    errorMsg.textContent = 'Veuillez vérifier votre email avant de vous connecter. Un nouveau lien de vérification a été envoyé.';
+                    errorMsg.style.display = 'block';
+                    await user.sendEmailVerification();
+                    return;
+                }
+                // Connexion réussie, rediriger vers tableau de bord
+                window.location.href = 'dashboard.html';
+            } catch (error) {
+                errorMsg.textContent = error.message;
+                errorMsg.style.display = 'block';
+            }
+        });
+
+        // Mot de passe oublié
+        document.getElementById('forgotPassword').addEventListener('click', async (e) => {
+            e.preventDefault();
+            const email = prompt('Veuillez saisir votre adresse email :');
+            if (email) {
+                try {
+                    await auth.sendPasswordResetEmail(email);
+                    alert('Un email de réinitialisation a été envoyé.');
+                } catch (error) {
+                    alert(error.message);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
