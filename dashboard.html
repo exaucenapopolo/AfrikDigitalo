@@ -36,11 +36,48 @@
             display: flex;
             flex-direction: column;
         }
-        /* Structure principale */
+        /* Header fixe */
+        .main-header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: var(--white);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .main-header .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--secondary);
+        }
+        .main-header .logo i {
+            color: var(--primary);
+            font-size: 2rem;
+        }
+        .main-header .logo .highlight { color: var(--primary); }
+        .header-user {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .header-user img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary);
+        }
+        /* Dashboard layout */
         .dashboard {
             display: flex;
             flex: 1;
-            min-height: 100vh;
         }
         /* Sidebar desktop */
         .sidebar {
@@ -49,29 +86,12 @@
             color: white;
             padding: 30px 0;
             position: sticky;
-            top: 0;
-            height: 100vh;
+            top: 70px; /* hauteur du header */
+            height: calc(100vh - 70px);
             overflow-y: auto;
             transition: transform 0.3s ease;
-            z-index: 1000;
+            z-index: 900;
         }
-        .sidebar .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 0 20px;
-            margin-bottom: 40px;
-        }
-        .sidebar .logo i {
-            font-size: 2rem;
-            color: var(--primary);
-        }
-        .sidebar .logo span {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: white;
-        }
-        .sidebar .logo .highlight { color: var(--primary); }
         .sidebar nav ul {
             list-style: none;
         }
@@ -101,70 +121,29 @@
         /* Bouton menu mobile */
         .mobile-menu-toggle {
             display: none;
-            position: fixed;
-            top: 15px;
-            left: 15px;
-            z-index: 1100;
             background: var(--primary);
             color: white;
             border: none;
-            width: 50px;
-            height: 50px;
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             cursor: pointer;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            position: fixed;
+            bottom: 80px;
+            right: 15px;
+            z-index: 1100;
         }
         /* Contenu principal */
         .main-content {
             flex: 1;
             padding: 30px;
             overflow-x: hidden;
-            margin-left: 280px; /* correspond à la sidebar */
+            margin-left: 280px;
             transition: margin-left 0.3s;
         }
-        /* Header */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            background: white;
-            padding: 15px 25px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-        .header h1 {
-            font-size: 1.8rem;
-            color: var(--secondary);
-            font-weight: 600;
-        }
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-        .user-info img {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid var(--primary);
-        }
-        .btn-logout {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background 0.3s;
-        }
-        .btn-logout:hover {
-            background: #e55a2b;
-        }
-        /* Footer navigation mobile */
+        /* Footer mobile */
         .mobile-nav {
             display: none;
             position: fixed;
@@ -198,7 +177,7 @@
         .mobile-nav ul li a.active {
             color: var(--primary);
         }
-        /* Bannière de vérification */
+        /* Bannière vérification */
         .verification-banner {
             background: #fff3cd;
             border-left: 4px solid var(--warning);
@@ -225,9 +204,6 @@
             border-radius: 5px;
             cursor: pointer;
             font-weight: 600;
-        }
-        .verification-banner button:hover {
-            background: #e0a800;
         }
         /* Stats cards */
         .stats-grid {
@@ -310,7 +286,7 @@
             gap: 10px;
             flex-wrap: wrap;
         }
-        .btn-edit, .btn-delete, .btn-buy {
+        .btn {
             padding: 8px 15px;
             border: none;
             border-radius: 5px;
@@ -319,18 +295,14 @@
             font-size: 0.9rem;
             transition: background 0.3s;
         }
-        .btn-edit {
-            background: var(--accent-blue);
-            color: white;
-        }
-        .btn-delete {
-            background: var(--danger);
-            color: white;
-        }
-        .btn-buy {
-            background: var(--accent-green);
-            color: white;
-        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--accent-green); color: white; }
+        .btn-info { background: var(--accent-blue); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-warning { background: var(--warning); color: white; }
+        .btn-edit { background: var(--accent-blue); color: white; }
+        .btn-delete { background: var(--danger); color: white; }
+        .btn-buy { background: var(--accent-green); color: white; }
         .btn-add {
             background: var(--accent-green);
             color: white;
@@ -546,6 +518,8 @@
                 position: fixed;
                 left: -280px;
                 height: 100vh;
+                top: 0;
+                padding-top: 70px;
                 z-index: 1200;
             }
             .sidebar.open {
@@ -554,7 +528,7 @@
             .main-content {
                 margin-left: 0;
                 padding: 20px;
-                padding-bottom: 80px; /* pour le footer mobile */
+                padding-bottom: 80px;
             }
             .mobile-menu-toggle {
                 display: block;
@@ -562,50 +536,40 @@
             .mobile-nav {
                 display: block;
             }
-            .header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 15px;
-                padding: 15px;
+            .main-header {
+                padding: 10px;
             }
-            .user-info {
-                width: 100%;
-                justify-content: space-between;
-            }
-            .stats-grid {
-                grid-template-columns: 1fr;
+            .header-user span {
+                display: none;
             }
         }
     </style>
 </head>
 <body>
+    <!-- Header fixe -->
+    <header class="main-header">
+        <div class="logo">
+            <i class="fas fa-globe-africa"></i>
+            <span>Afrik<span class="highlight">Digitalo</span></span>
+        </div>
+        <div class="header-user">
+            <span id="headerUserName">Utilisateur</span>
+            <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
+        </div>
+    </header>
+
     <button class="mobile-menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
 
     <div class="dashboard">
         <!-- Sidebar desktop -->
         <aside class="sidebar" id="sidebar">
-            <div class="logo">
-                <i class="fas fa-globe-africa"></i>
-                <span>Afrik<span class="highlight">Digitalo</span></span>
-            </div>
             <nav>
-                <ul id="sidebarNav">
-                    <!-- Liens générés par JS selon le rôle -->
-                </ul>
+                <ul id="sidebarNav"></ul>
             </nav>
         </aside>
 
         <!-- Contenu principal -->
         <main class="main-content" id="mainContent">
-            <div class="header">
-                <h1 id="dashboardTitle">Tableau de bord</h1>
-                <div class="user-info">
-                    <span id="userName">Utilisateur</span>
-                    <img id="userAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
-                    <button class="btn-logout" id="logoutBtn">Déconnexion</button>
-                </div>
-            </div>
-
             <!-- Bannière vérification email -->
             <div id="verificationBanner" class="verification-banner" style="display: none;">
                 <p><i class="fas fa-exclamation-triangle"></i> Votre adresse email n'est pas encore vérifiée. Veuillez vérifier votre boîte mail pour activer votre compte.</p>
@@ -619,9 +583,7 @@
 
     <!-- Navigation mobile (footer) -->
     <nav class="mobile-nav" id="mobileNav">
-        <ul id="mobileNavList">
-            <!-- Liens générés par JS -->
-        </ul>
+        <ul id="mobileNavList"></ul>
     </nav>
 
     <!-- Modal pour ajouter/modifier service -->
@@ -631,29 +593,43 @@
             <h3 id="modalTitle">Ajouter un service</h3>
             <form id="serviceForm">
                 <div class="form-group">
-                    <label>Titre</label>
+                    <label>Titre *</label>
                     <input type="text" id="serviceTitle" required>
                 </div>
                 <div class="form-group">
-                    <label>Description</label>
+                    <label>Description *</label>
                     <textarea id="serviceDesc" rows="3" required></textarea>
                 </div>
                 <div class="form-group">
-                    <label>Prix (FCFA)</label>
+                    <label>Prix (FCFA) *</label>
                     <input type="number" id="servicePrice" required>
                 </div>
                 <div class="form-group">
-                    <label>Catégorie</label>
-                    <select id="serviceCategory" required>
-                        <!-- options chargées par JS -->
-                    </select>
+                    <label>Catégorie *</label>
+                    <select id="serviceCategory" required></select>
                 </div>
                 <div class="form-group">
-                    <label>Délai de livraison (jours)</label>
+                    <label>Délai de livraison (jours) *</label>
                     <input type="number" id="serviceDelivery" value="3" required>
+                </div>
+                <div class="form-group">
+                    <label>Image (URL) - optionnel</label>
+                    <input type="url" id="serviceImage" placeholder="https://...">
                 </div>
                 <button type="submit" class="btn-save">Enregistrer</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal de confirmation de déconnexion -->
+    <div class="modal" id="logoutModal">
+        <div class="modal-content">
+            <h3>Confirmation</h3>
+            <p>Êtes-vous sûr de vouloir vous déconnecter ?</p>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-primary" id="confirmLogout">Oui</button>
+                <button class="btn btn-secondary" onclick="closeLogoutModal()">Non</button>
+            </div>
         </div>
     </div>
 
@@ -681,8 +657,9 @@
         // ========== VARIABLES GLOBALES ==========
         let currentUser = null;
         let userData = null;
-        let currentSection = 'dashboard'; // section active
+        let currentSection = 'dashboard';
         let editingServiceId = null;
+        let cart = []; // panier local, mais on utilisera Firestore
 
         // ========== ÉLÉMENTS DOM ==========
         const menuToggle = document.getElementById('menuToggle');
@@ -690,15 +667,14 @@
         const mobileNavList = document.getElementById('mobileNavList');
         const sidebarNav = document.getElementById('sidebarNav');
         const dynamicSections = document.getElementById('dynamicSections');
-        const dashboardTitle = document.getElementById('dashboardTitle');
-        const userNameSpan = document.getElementById('userName');
-        const userAvatar = document.getElementById('userAvatar');
-        const logoutBtn = document.getElementById('logoutBtn');
+        const headerUserName = document.getElementById('headerUserName');
+        const headerAvatar = document.getElementById('headerAvatar');
         const verificationBanner = document.getElementById('verificationBanner');
         const resendBtn = document.getElementById('resendVerificationBtn');
         const serviceModal = document.getElementById('serviceModal');
         const serviceForm = document.getElementById('serviceForm');
         const modalTitle = document.getElementById('modalTitle');
+        const logoutModal = document.getElementById('logoutModal');
 
         // ========== FONCTIONS UTILITAIRES ==========
         function showToast(message, type = 'info') {
@@ -714,7 +690,7 @@
         menuToggle.addEventListener('click', () => {
             sidebar.classList.toggle('open');
         });
-        // Fermer sidebar si clic en dehors (mobile)
+        // Fermer sidebar si clic en dehors
         document.addEventListener('click', (e) => {
             if (window.innerWidth <= 768 && !sidebar.contains(e.target) && !menuToggle.contains(e.target) && sidebar.classList.contains('open')) {
                 sidebar.classList.remove('open');
@@ -723,13 +699,13 @@
 
         // ========== GESTION DES SECTIONS ==========
         function renderSections(role) {
-            // Définir les sections selon le rôle
             let sections = [];
             if (role === 'creator') {
                 sections = [
                     { id: 'dashboard', icon: 'fas fa-home', label: 'Accueil' },
                     { id: 'services', icon: 'fas fa-list', label: 'Mes services' },
                     { id: 'orders', icon: 'fas fa-shopping-bag', label: 'Commandes' },
+                    { id: 'followers', icon: 'fas fa-users', label: 'Abonnés' },
                     { id: 'profile', icon: 'fas fa-user', label: 'Profil' },
                     { id: 'settings', icon: 'fas fa-cog', label: 'Paramètres' }
                 ];
@@ -737,24 +713,25 @@
                 sections = [
                     { id: 'dashboard', icon: 'fas fa-home', label: 'Accueil' },
                     { id: 'explore', icon: 'fas fa-search', label: 'Explorer' },
-                    { id: 'purchases', icon: 'fas fa-shopping-cart', label: 'Achats' },
+                    { id: 'cart', icon: 'fas fa-shopping-cart', label: 'Panier' },
+                    { id: 'orders', icon: 'fas fa-history', label: 'Mes achats' },
                     { id: 'favorites', icon: 'fas fa-heart', label: 'Favoris' },
                     { id: 'profile', icon: 'fas fa-user', label: 'Profil' },
                     { id: 'settings', icon: 'fas fa-cog', label: 'Paramètres' }
                 ];
             }
 
-            // Générer la sidebar (desktop)
+            // Sidebar
             sidebarNav.innerHTML = sections.map(s => `
                 <li><a href="#" class="nav-link ${s.id === currentSection ? 'active' : ''}" data-section="${s.id}"><i class="${s.icon}"></i> ${s.label}</a></li>
             `).join('');
 
-            // Générer la navigation mobile
+            // Mobile nav
             mobileNavList.innerHTML = sections.map(s => `
                 <li><a href="#" class="mobile-nav-link ${s.id === currentSection ? 'active' : ''}" data-section="${s.id}"><i class="${s.icon}"></i> <span>${s.label}</span></a></li>
             `).join('');
 
-            // Ajouter les écouteurs d'événements
+            // Ajouter écouteurs
             document.querySelectorAll('.nav-link, .mobile-nav-link').forEach(link => {
                 link.addEventListener('click', (e) => {
                     e.preventDefault();
@@ -763,87 +740,73 @@
                 });
             });
 
-            // Afficher la section active
             setActiveSection(currentSection);
         }
 
         function setActiveSection(sectionId) {
             currentSection = sectionId;
-            // Mettre à jour les classes actives dans les menus
             document.querySelectorAll('.nav-link, .mobile-nav-link').forEach(link => {
                 link.classList.toggle('active', link.dataset.section === sectionId);
             });
-            // Charger le contenu de la section
             loadSectionContent(sectionId);
-            // Sur mobile, fermer la sidebar après navigation
-            if (window.innerWidth <= 768) {
-                sidebar.classList.remove('open');
-            }
+            if (window.innerWidth <= 768) sidebar.classList.remove('open');
         }
 
         async function loadSectionContent(sectionId) {
             if (!userData) return;
             let html = '';
             switch (sectionId) {
-                case 'dashboard':
-                    html = await getDashboardHTML();
-                    break;
-                case 'services':
-                    if (userData.role === 'creator') {
-                        html = await getServicesHTML();
-                    }
-                    break;
-                case 'explore':
-                    html = await getExploreHTML();
-                    break;
-                case 'orders':
-                case 'purchases':
-                    html = await getOrdersHTML(userData.role);
-                    break;
-                case 'favorites':
-                    html = await getFavoritesHTML();
-                    break;
-                case 'profile':
-                    html = await getProfileHTML();
-                    break;
-                case 'settings':
-                    html = getSettingsHTML();
-                    break;
-                default:
-                    html = '<p>Section en construction</p>';
+                case 'dashboard': html = await getDashboardHTML(); break;
+                case 'services': html = await getServicesHTML(); break;
+                case 'explore': html = await getExploreHTML(); break;
+                case 'cart': html = await getCartHTML(); break;
+                case 'orders': html = await getOrdersHTML(); break;
+                case 'favorites': html = await getFavoritesHTML(); break;
+                case 'followers': html = await getFollowersHTML(); break;
+                case 'profile': html = await getProfileHTML(); break;
+                case 'settings': html = getSettingsHTML(); break;
+                default: html = '<p>Section en construction</p>';
             }
             dynamicSections.innerHTML = html;
-            // Après injection, attacher les événements spécifiques
             attachSectionEvents(sectionId);
         }
 
-        // ========== CONTENU DES SECTIONS ==========
+        // ========== CONTENU DES SECTIONS (RÉEL) ==========
         async function getDashboardHTML() {
             if (userData.role === 'creator') {
-                // Stats créateur
-                const snapshot = await db.collection('services').where('creatorId', '==', currentUser.uid).get();
-                const servicesCount = snapshot.size;
+                // Statistiques réelles
+                const servicesSnap = await db.collection('services').where('creatorId', '==', currentUser.uid).get();
+                const servicesCount = servicesSnap.size;
+                const ordersSnap = await db.collection('orders').where('sellerId', '==', currentUser.uid).get();
+                const ordersCount = ordersSnap.size;
+                const followersSnap = await db.collection('follows').where('followingId', '==', currentUser.uid).get();
+                const followersCount = followersSnap.size;
+                // Calcul revenus (simulé pour l'instant, mais on pourrait sommer)
+                let revenue = 0;
+                ordersSnap.forEach(doc => {
+                    revenue += doc.data().amount || 0;
+                });
                 return `
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
                             <div class="stat-details">
-                                <h3>Revenus totaux</h3>
-                                <p>125 000 FCFA</p>
+                                <h3>Revenus</h3>
+                                <p>${revenue} FCFA</p>
                             </div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon"><i class="fas fa-shopping-cart"></i></div>
                             <div class="stat-details">
                                 <h3>Commandes</h3>
-                                <p>24</p>
+                                <p>${ordersCount}</p>
                             </div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-icon"><i class="fas fa-star"></i></div>
+                            <div class="stat-icon"><i class="fas fa-users"></i></div>
                             <div class="stat-details">
-                                <h3>Note moyenne</h3>
-                                <p>4.8</p>
+                                <h3>Abonnés</h3>
+                                <p>${followersCount}</p>
                             </div>
                         </div>
                         <div class="stat-card">
@@ -860,35 +823,34 @@
                     </div>
                 `;
             } else {
-                // Stats acheteur
+                // Acheteur
+                const ordersSnap = await db.collection('orders').where('buyerId', '==', currentUser.uid).get();
+                const purchasesCount = ordersSnap.size;
+                let spent = 0;
+                ordersSnap.forEach(doc => spent += doc.data().amount || 0);
+                const favoritesSnap = await db.collection('favorites').where('userId', '==', currentUser.uid).get();
+                const favCount = favoritesSnap.size;
                 return `
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-icon"><i class="fas fa-shopping-bag"></i></div>
                             <div class="stat-details">
-                                <h3>Services achetés</h3>
-                                <p>8</p>
+                                <h3>Achats</h3>
+                                <p>${purchasesCount}</p>
                             </div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon"><i class="fas fa-clock"></i></div>
                             <div class="stat-details">
-                                <h3>Dépenses totales</h3>
-                                <p>45 000 FCFA</p>
+                                <h3>Dépenses</h3>
+                                <p>${spent} FCFA</p>
                             </div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon"><i class="fas fa-heart"></i></div>
                             <div class="stat-details">
                                 <h3>Favoris</h3>
-                                <p>12</p>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon"><i class="fas fa-star"></i></div>
-                            <div class="stat-details">
-                                <h3>Avis donnés</h3>
-                                <p>5</p>
+                                <p>${favCount}</p>
                             </div>
                         </div>
                     </div>
@@ -901,50 +863,27 @@
         }
 
         async function getServicesHTML() {
+            if (userData.role !== 'creator') return '';
             const snapshot = await db.collection('services').where('creatorId', '==', currentUser.uid).get();
             if (snapshot.empty) {
                 return `
                     <button class="btn-add" onclick="openModal()"><i class="fas fa-plus"></i> Ajouter un service</button>
-                    <p>Aucun service pour le moment. Cliquez sur "Ajouter un service".</p>
+                    <p>Aucun service pour le moment.</p>
                 `;
             }
-            let servicesHTML = '<button class="btn-add" onclick="openModal()"><i class="fas fa-plus"></i> Ajouter un service</button>';
-            servicesHTML += '<div class="services-grid">';
-            snapshot.forEach(doc => {
-                const s = doc.data();
-                servicesHTML += `
-                    <div class="service-card">
-                        <h3>${s.title}</h3>
-                        <p>${s.description.substring(0, 60)}...</p>
-                        <div class="service-price">${s.price} FCFA</div>
-                        <div class="service-actions">
-                            <button class="btn-edit" onclick="editService('${doc.id}', '${s.title}', '${s.description}', ${s.price}, '${s.category}', ${s.deliveryDays})"><i class="fas fa-edit"></i> Modifier</button>
-                            <button class="btn-delete" onclick="deleteService('${doc.id}')"><i class="fas fa-trash"></i> Supprimer</button>
-                        </div>
-                    </div>
-                `;
-            });
-            servicesHTML += '</div>';
-            return servicesHTML;
-        }
-
-        async function getExploreHTML() {
-            // Afficher tous les services disponibles
-            const snapshot = await db.collection('services').get();
-            if (snapshot.empty) {
-                return '<p>Aucun service disponible pour le moment.</p>';
-            }
-            let html = '<div class="services-grid">';
+            let html = '<button class="btn-add" onclick="openModal()"><i class="fas fa-plus"></i> Ajouter un service</button>';
+            html += '<div class="services-grid">';
             snapshot.forEach(doc => {
                 const s = doc.data();
                 html += `
                     <div class="service-card">
+                        ${s.image ? `<img src="${s.image}" alt="${s.title}" style="width:100%; height:150px; object-fit:cover; border-radius:5px; margin-bottom:10px;">` : ''}
                         <h3>${s.title}</h3>
-                        <p>${s.description.substring(0, 60)}...</p>
+                        <p>${s.description.substring(0, 80)}...</p>
                         <div class="service-price">${s.price} FCFA</div>
                         <div class="service-actions">
-                            <button class="btn-buy" onclick="buyService('${doc.id}')"><i class="fas fa-shopping-cart"></i> Acheter</button>
-                            <button class="btn-edit" onclick="addToFavorites('${doc.id}')"><i class="fas fa-heart"></i> Favori</button>
+                            <button class="btn-edit" onclick="editService('${doc.id}', '${s.title.replace(/'/g, "\\'")}', '${s.description.replace(/'/g, "\\'")}', ${s.price}, '${s.category}', ${s.deliveryDays}, '${s.image || ''}')"><i class="fas fa-edit"></i> Modifier</button>
+                            <button class="btn-delete" onclick="deleteService('${doc.id}')"><i class="fas fa-trash"></i> Supprimer</button>
                         </div>
                     </div>
                 `;
@@ -953,56 +892,149 @@
             return html;
         }
 
-        async function getOrdersHTML(role) {
-            // Simulé pour l'instant
-            return `
-                <div class="orders-table">
-                    <h2>${role === 'creator' ? 'Commandes reçues' : 'Mes achats'}</h2>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Service</th>
-                                <th>Client/Créateur</th>
-                                <th>Montant</th>
-                                <th>Statut</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>#12345</td>
-                                <td>Logo design</td>
-                                <td>Jean Dupont</td>
-                                <td>25 000 FCFA</td>
-                                <td><span class="badge success">Terminé</span></td>
-                                <td>01/03/2026</td>
-                            </tr>
-                            <tr>
-                                <td>#12346</td>
-                                <td>Développement site</td>
-                                <td>Marie Diop</td>
-                                <td>150 000 FCFA</td>
-                                <td><span class="badge warning">En cours</span></td>
-                                <td>28/02/2026</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            `;
+        async function getExploreHTML() {
+            // Afficher tous les services (publics)
+            const snapshot = await db.collection('services').get();
+            if (snapshot.empty) {
+                return '<p>Aucun service disponible pour le moment.</p>';
+            }
+            // Pour chaque service, récupérer le nom du créateur
+            let html = '<div class="services-grid">';
+            for (const doc of snapshot.docs) {
+                const s = doc.data();
+                const creatorDoc = await db.collection('users').doc(s.creatorId).get();
+                const creatorName = creatorDoc.exists ? creatorDoc.data().name : 'Inconnu';
+                html += `
+                    <div class="service-card">
+                        ${s.image ? `<img src="${s.image}" alt="${s.title}" style="width:100%; height:150px; object-fit:cover; border-radius:5px; margin-bottom:10px;">` : ''}
+                        <h3>${s.title}</h3>
+                        <p>${s.description.substring(0, 80)}...</p>
+                        <div><i class="fas fa-user"></i> ${creatorName}</div>
+                        <div class="service-price">${s.price} FCFA</div>
+                        <div class="service-actions">
+                            <button class="btn-buy" onclick="addToCart('${doc.id}')"><i class="fas fa-cart-plus"></i> Ajouter au panier</button>
+                            <button class="btn-info" onclick="contactCreator('${s.creatorId}')"><i class="fas fa-envelope"></i> Contacter</button>
+                            <button class="btn-warning" onclick="addToFavorites('${doc.id}')"><i class="fas fa-heart"></i> Favori</button>
+                        </div>
+                    </div>
+                `;
+            }
+            html += '</div>';
+            return html;
+        }
+
+        async function getCartHTML() {
+            if (userData.role !== 'buyer') return '';
+            // Récupérer le panier de l'utilisateur
+            const cartSnap = await db.collection('cart').where('userId', '==', currentUser.uid).get();
+            if (cartSnap.empty) {
+                return '<p>Votre panier est vide.</p>';
+            }
+            let total = 0;
+            let items = [];
+            for (const doc of cartSnap.docs) {
+                const item = doc.data();
+                const serviceDoc = await db.collection('services').doc(item.serviceId).get();
+                if (serviceDoc.exists) {
+                    const s = serviceDoc.data();
+                    items.push({ id: doc.id, serviceId: item.serviceId, title: s.title, price: s.price, quantity: item.quantity || 1 });
+                    total += s.price * (item.quantity || 1);
+                }
+            }
+            let html = '<div class="orders-table"><h2>Votre panier</h2><table><thead><tr><th>Service</th><th>Prix unitaire</th><th>Quantité</th><th>Total</th><th>Action</th></tr></thead><tbody>';
+            items.forEach(item => {
+                html += `<tr>
+                    <td>${item.title}</td>
+                    <td>${item.price} FCFA</td>
+                    <td>${item.quantity}</td>
+                    <td>${item.price * item.quantity} FCFA</td>
+                    <td><button class="btn-delete" onclick="removeFromCart('${item.id}')"><i class="fas fa-trash"></i></button></td>
+                </tr>`;
+            });
+            html += `</tbody></table><p><strong>Total : ${total} FCFA</strong></p>`;
+            html += `<button class="btn-success" onclick="checkout()">Passer la commande</button>`;
+            html += '</div>';
+            return html;
+        }
+
+        async function getOrdersHTML() {
+            let orders;
+            if (userData.role === 'creator') {
+                orders = await db.collection('orders').where('sellerId', '==', currentUser.uid).get();
+            } else {
+                orders = await db.collection('orders').where('buyerId', '==', currentUser.uid).get();
+            }
+            if (orders.empty) {
+                return '<p>Aucune commande.</p>';
+            }
+            let html = '<div class="orders-table"><h2>Commandes</h2><table><thead><tr><th>ID</th><th>Service</th><th>Montant</th><th>Statut</th><th>Date</th></tr></thead><tbody>';
+            orders.forEach(doc => {
+                const o = doc.data();
+                html += `<tr>
+                    <td>${doc.id.slice(0, 6)}...</td>
+                    <td>${o.serviceId}</td>
+                    <td>${o.amount} FCFA</td>
+                    <td><span class="badge ${o.status === 'completed' ? 'success' : o.status === 'pending' ? 'warning' : 'danger'}">${o.status}</span></td>
+                    <td>${new Date(o.createdAt?.toDate()).toLocaleDateString()}</td>
+                </tr>`;
+            });
+            html += '</tbody></table></div>';
+            return html;
         }
 
         async function getFavoritesHTML() {
-            // Simulé
-            return '<p>Vos favoris apparaîtront ici.</p>';
+            if (userData.role !== 'buyer') return '';
+            const favSnap = await db.collection('favorites').where('userId', '==', currentUser.uid).get();
+            if (favSnap.empty) {
+                return '<p>Aucun favori.</p>';
+            }
+            let html = '<div class="services-grid">';
+            for (const doc of favSnap.docs) {
+                const fav = doc.data();
+                const serviceDoc = await db.collection('services').doc(fav.serviceId).get();
+                if (serviceDoc.exists) {
+                    const s = serviceDoc.data();
+                    html += `
+                        <div class="service-card">
+                            <h3>${s.title}</h3>
+                            <p>${s.description.substring(0, 60)}...</p>
+                            <div class="service-price">${s.price} FCFA</div>
+                            <div class="service-actions">
+                                <button class="btn-buy" onclick="addToCart('${fav.serviceId}')">Ajouter au panier</button>
+                                <button class="btn-delete" onclick="removeFavorite('${doc.id}')">Retirer</button>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            html += '</div>';
+            return html;
+        }
+
+        async function getFollowersHTML() {
+            if (userData.role !== 'creator') return '';
+            const followersSnap = await db.collection('follows').where('followingId', '==', currentUser.uid).get();
+            if (followersSnap.empty) {
+                return '<p>Vous n\'avez pas encore d\'abonnés.</p>';
+            }
+            let html = '<div class="orders-table"><h2>Mes abonnés</h2><ul>';
+            for (const doc of followersSnap.docs) {
+                const f = doc.data();
+                const userDoc = await db.collection('users').doc(f.followerId).get();
+                if (userDoc.exists) {
+                    html += `<li>${userDoc.data().name}</li>`;
+                }
+            }
+            html += '</ul></div>';
+            return html;
         }
 
         async function getProfileHTML() {
-            // Pré-remplir avec userData
             const categories = await getCategoriesList();
+            const pays = getCountriesList();
             return `
                 <div class="profile-form">
-                    <h2>Modifier mon profil</h2>
+                    <h2>Mon profil</h2>
                     <form id="profileForm">
                         <div class="form-group">
                             <label>Nom complet</label>
@@ -1020,7 +1052,7 @@
                             <label>Pays</label>
                             <select id="profileCountry" required>
                                 <option value="">Sélectionnez</option>
-                                ${countriesOptions(userData.country)}
+                                ${pays.map(p => `<option value="${p}" ${p === userData.country ? 'selected' : ''}>${p}</option>`).join('')}
                             </select>
                         </div>
                         ${userData.role === 'creator' ? `
@@ -1032,7 +1064,7 @@
                             <label>Catégorie principale</label>
                             <select id="profileCategory">
                                 <option value="">Sélectionnez</option>
-                                ${categoriesOptions(userData.category)}
+                                ${categories.map(c => `<option value="${c}" ${c === userData.category ? 'selected' : ''}>${c}</option>`).join('')}
                             </select>
                         </div>
                         <div class="form-group">
@@ -1053,14 +1085,14 @@
                     <div class="setting-item">
                         <span>Notifications par email</span>
                         <label class="toggle-switch">
-                            <input type="checkbox" id="notifEmail" checked>
+                            <input type="checkbox" id="notifEmail" ${userData.settings?.emailNotifications ? 'checked' : ''}>
                             <span class="slider"></span>
                         </label>
                     </div>
                     <div class="setting-item">
                         <span>Notifications push</span>
                         <label class="toggle-switch">
-                            <input type="checkbox" id="notifPush">
+                            <input type="checkbox" id="notifPush" ${userData.settings?.pushNotifications ? 'checked' : ''}>
                             <span class="slider"></span>
                         </label>
                     </div>
@@ -1068,9 +1100,9 @@
                 <div class="settings-group">
                     <h3>Confidentialité</h3>
                     <div class="setting-item">
-                        <span>Profil public</span>
+                        <span>Compte public</span>
                         <label class="toggle-switch">
-                            <input type="checkbox" id="profilePublic" checked>
+                            <input type="checkbox" id="profilePublic" ${userData.settings?.publicProfile !== false ? 'checked' : ''}>
                             <span class="slider"></span>
                         </label>
                     </div>
@@ -1080,11 +1112,12 @@
                     <div class="setting-item">
                         <span>Langue</span>
                         <select id="lang">
-                            <option>Français</option>
-                            <option>Anglais</option>
+                            <option value="fr" ${userData.settings?.lang === 'fr' ? 'selected' : ''}>Français</option>
+                            <option value="en" ${userData.settings?.lang === 'en' ? 'selected' : ''}>Anglais</option>
                         </select>
                     </div>
                 </div>
+                <button class="btn-save" onclick="saveSettings()">Enregistrer les paramètres</button>
             `;
         }
 
@@ -1103,43 +1136,30 @@
                 "Réseaux", "Support technique", "Administration système", "Cloud computing", "Data science"
             ];
         }
-
-        function categoriesOptions(selected) {
-            const cats = getCategoriesList();
-            return cats.map(c => `<option value="${c}" ${c === selected ? 'selected' : ''}>${c}</option>`).join('');
-        }
-
-        function countriesOptions(selected) {
-            const pays = [
-                "Sénégal", "Côte d'Ivoire", "Cameroun", "Maroc", "Tunisie", "Algérie", "Burkina Faso",
-                "Mali", "Nigéria", "Afrique du Sud", "Kenya", "Ghana", "Congo", "RDC", "Bénin", "Togo",
-                "Niger", "Mauritanie", "Guinée", "Éthiopie", "Ouganda", "Rwanda", "Tanzanie", "Madagascar"
-            ];
-            return pays.map(p => `<option value="${p}" ${p === selected ? 'selected' : ''}>${p}</option>`).join('');
+        function getCountriesList() {
+            return ["Sénégal", "Côte d'Ivoire", "Cameroun", "Maroc", "Tunisie", "Algérie", "Burkina Faso", "Mali", "Nigéria", "Afrique du Sud", "Kenya", "Ghana", "Congo", "RDC", "Bénin", "Togo", "Niger", "Mauritanie", "Guinée", "Éthiopie", "Ouganda", "Rwanda", "Tanzanie", "Madagascar"];
         }
 
         // ========== GESTION DES SERVICES ==========
-        window.openModal = function(serviceId = null) {
-            editingServiceId = serviceId;
-            modalTitle.textContent = serviceId ? 'Modifier le service' : 'Ajouter un service';
-            if (serviceId) {
-                // Pré-remplir le formulaire (les données seront passées en paramètres)
-            } else {
-                document.getElementById('serviceForm').reset();
-            }
+        window.openModal = function() {
+            editingServiceId = null;
+            modalTitle.textContent = 'Ajouter un service';
+            document.getElementById('serviceForm').reset();
             serviceModal.classList.add('active');
         };
         window.closeModal = function() {
             serviceModal.classList.remove('active');
-            editingServiceId = null;
         };
-        window.editService = function(id, title, desc, price, category, delivery) {
+        window.editService = function(id, title, desc, price, category, delivery, image) {
+            editingServiceId = id;
+            modalTitle.textContent = 'Modifier le service';
             document.getElementById('serviceTitle').value = title;
             document.getElementById('serviceDesc').value = desc;
             document.getElementById('servicePrice').value = price;
             document.getElementById('serviceCategory').value = category;
             document.getElementById('serviceDelivery').value = delivery;
-            openModal(id);
+            document.getElementById('serviceImage').value = image || '';
+            serviceModal.classList.add('active');
         };
         window.deleteService = async function(id) {
             if (confirm('Supprimer ce service ?')) {
@@ -1148,14 +1168,7 @@
                 loadSectionContent('services');
             }
         };
-        window.buyService = function(id) {
-            showToast('Fonctionnalité d\'achat à venir', 'info');
-        };
-        window.addToFavorites = function(id) {
-            showToast('Ajouté aux favoris', 'success');
-        };
 
-        // Soumission du formulaire service
         serviceForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const title = document.getElementById('serviceTitle').value;
@@ -1163,8 +1176,9 @@
             const price = parseFloat(document.getElementById('servicePrice').value);
             const category = document.getElementById('serviceCategory').value;
             const delivery = parseInt(document.getElementById('serviceDelivery').value);
+            const image = document.getElementById('serviceImage').value;
             if (!title || !desc || !price || !category) {
-                showToast('Veuillez remplir tous les champs', 'error');
+                showToast('Veuillez remplir tous les champs obligatoires', 'error');
                 return;
             }
             const serviceData = {
@@ -1174,13 +1188,15 @@
                 price,
                 category,
                 deliveryDays: delivery,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                image: image || null,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
             try {
                 if (editingServiceId) {
                     await db.collection('services').doc(editingServiceId).update(serviceData);
                     showToast('Service modifié', 'success');
                 } else {
+                    serviceData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
                     await db.collection('services').add(serviceData);
                     showToast('Service ajouté', 'success');
                 }
@@ -1191,10 +1207,117 @@
             }
         });
 
+        // ========== GESTION DU PANIER ==========
+        window.addToCart = async function(serviceId) {
+            // Vérifier si déjà dans le panier
+            const existing = await db.collection('cart').where('userId', '==', currentUser.uid).where('serviceId', '==', serviceId).get();
+            if (!existing.empty) {
+                showToast('Déjà dans le panier', 'info');
+                return;
+            }
+            await db.collection('cart').add({
+                userId: currentUser.uid,
+                serviceId: serviceId,
+                quantity: 1,
+                addedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            showToast('Ajouté au panier', 'success');
+        };
+        window.removeFromCart = async function(cartId) {
+            await db.collection('cart').doc(cartId).delete();
+            showToast('Retiré du panier', 'success');
+            loadSectionContent('cart');
+        };
+        window.checkout = async function() {
+            // Récupérer le panier, créer une commande pour chaque service
+            const cartSnap = await db.collection('cart').where('userId', '==', currentUser.uid).get();
+            if (cartSnap.empty) return;
+            const batch = db.batch();
+            for (const doc of cartSnap.docs) {
+                const item = doc.data();
+                const serviceDoc = await db.collection('services').doc(item.serviceId).get();
+                if (!serviceDoc.exists) continue;
+                const service = serviceDoc.data();
+                const orderRef = db.collection('orders').doc();
+                batch.set(orderRef, {
+                    buyerId: currentUser.uid,
+                    sellerId: service.creatorId,
+                    serviceId: item.serviceId,
+                    amount: service.price,
+                    status: 'pending',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                batch.delete(doc.ref);
+            }
+            await batch.commit();
+            showToast('Commande passée avec succès !', 'success');
+            loadSectionContent('cart');
+        };
+
+        // ========== FAVORIS ==========
+        window.addToFavorites = async function(serviceId) {
+            const existing = await db.collection('favorites').where('userId', '==', currentUser.uid).where('serviceId', '==', serviceId).get();
+            if (!existing.empty) {
+                showToast('Déjà dans les favoris', 'info');
+                return;
+            }
+            await db.collection('favorites').add({
+                userId: currentUser.uid,
+                serviceId: serviceId,
+                addedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            showToast('Ajouté aux favoris', 'success');
+        };
+        window.removeFavorite = async function(favId) {
+            await db.collection('favorites').doc(favId).delete();
+            showToast('Retiré des favoris', 'success');
+            loadSectionContent('favorites');
+        };
+
+        // ========== ABONNEMENT ==========
+        window.followCreator = async function(creatorId) {
+            const existing = await db.collection('follows').where('followerId', '==', currentUser.uid).where('followingId', '==', creatorId).get();
+            if (!existing.empty) return;
+            await db.collection('follows').add({
+                followerId: currentUser.uid,
+                followingId: creatorId,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            showToast('Vous suivez maintenant ce créateur', 'success');
+        };
+
+        // ========== CONTACT ==========
+        window.contactCreator = function(creatorId) {
+            // Rediriger vers une page de messagerie (à implémenter)
+            showToast('Fonctionnalité de messagerie à venir', 'info');
+        };
+
         // ========== GESTION DU PROFIL ==========
         async function attachSectionEvents(sectionId) {
+            if (sectionId === 'dashboard') {
+                // Charger les commandes récentes
+                const listDiv = document.getElementById('recentOrdersList') || document.getElementById('recentPurchasesList');
+                if (listDiv) {
+                    let orders;
+                    if (userData.role === 'creator') {
+                        orders = await db.collection('orders').where('sellerId', '==', currentUser.uid).limit(5).get();
+                    } else {
+                        orders = await db.collection('orders').where('buyerId', '==', currentUser.uid).limit(5).get();
+                    }
+                    if (orders.empty) {
+                        listDiv.innerHTML = '<p>Aucune commande récente.</p>';
+                    } else {
+                        let html = '';
+                        orders.forEach(doc => {
+                            const o = doc.data();
+                            html += `<div class="activity-item">Commande ${doc.id.slice(0,6)} - ${o.amount} FCFA - ${o.status}</div>`;
+                        });
+                        listDiv.innerHTML = html;
+                    }
+                }
+            }
             if (sectionId === 'profile') {
-                document.getElementById('profileForm')?.addEventListener('submit', async (e) => {
+                document.getElementById('profileForm').addEventListener('submit', async (e) => {
                     e.preventDefault();
                     const updates = {
                         name: document.getElementById('profileName').value,
@@ -1209,24 +1332,26 @@
                     try {
                         await db.collection('users').doc(currentUser.uid).update(updates);
                         showToast('Profil mis à jour', 'success');
-                        // Mettre à jour userData
                         userData = { ...userData, ...updates };
+                        headerUserName.textContent = userData.name;
                     } catch (error) {
                         showToast(error.message, 'error');
                     }
                 });
             }
-            if (sectionId === 'dashboard') {
-                // Charger les commandes récentes
-                const listDiv = document.getElementById('recentOrdersList') || document.getElementById('recentPurchasesList');
-                if (listDiv) {
-                    listDiv.innerHTML = `
-                        <div class="activity-item">Logo design - Jean Dupont - 25 000 FCFA</div>
-                        <div class="activity-item">Développement site - Marie Diop - 150 000 FCFA</div>
-                    `;
-                }
-            }
         }
+
+        // ========== SAUVEGARDE PARAMÈTRES ==========
+        window.saveSettings = async function() {
+            const settings = {
+                emailNotifications: document.getElementById('notifEmail')?.checked || false,
+                pushNotifications: document.getElementById('notifPush')?.checked || false,
+                publicProfile: document.getElementById('profilePublic')?.checked || false,
+                lang: document.getElementById('lang')?.value || 'fr'
+            };
+            await db.collection('users').doc(currentUser.uid).update({ settings });
+            showToast('Paramètres enregistrés', 'success');
+        };
 
         // ========== AUTH STATE ==========
         auth.onAuthStateChanged(async (user) => {
@@ -1244,16 +1369,19 @@
                 const doc = await db.collection('users').doc(user.uid).get();
                 if (doc.exists) {
                     userData = doc.data();
-                    userNameSpan.textContent = userData.name || user.email;
-                    userAvatar.src = userData.photoURL || 'https://randomuser.me/api/portraits/lego/1.jpg';
-                    dashboardTitle.textContent = userData.role === 'creator' ? 'Tableau de bord créateur' : 'Tableau de bord acheteur';
-                    renderSections(userData.role);
                 } else {
-                    // Créer un doc si inexistant (sécurité)
-                    userData = { role: 'buyer', name: user.displayName || '' };
+                    // Créer un doc par défaut
+                    userData = {
+                        name: user.displayName || '',
+                        email: user.email,
+                        role: 'buyer', // par défaut
+                        settings: { publicProfile: true }
+                    };
                     await db.collection('users').doc(user.uid).set(userData);
-                    renderSections('buyer');
                 }
+                headerUserName.textContent = userData.name || user.email;
+                headerAvatar.src = userData.photoURL || 'https://randomuser.me/api/portraits/lego/1.jpg';
+                renderSections(userData.role);
             } catch (error) {
                 console.error(error);
                 showToast('Erreur chargement utilisateur', 'error');
@@ -1267,11 +1395,25 @@
             }
         });
 
-        logoutBtn.addEventListener('click', () => {
-            auth.signOut().then(() => {
-                window.location.href = 'index.html';
-            });
+        // Déconnexion avec confirmation
+        window.confirmLogout = function() {
+            logoutModal.classList.add('active');
+        };
+        window.closeLogoutModal = function() {
+            logoutModal.classList.remove('active');
+        };
+        document.getElementById('confirmLogout').addEventListener('click', () => {
+            auth.signOut();
+            closeLogoutModal();
         });
+        // Bouton déconnexion dans header (on ajoute un bouton plus tard ?)
+        // On peut ajouter un bouton dans le header
+        const logoutBtn = document.createElement('button');
+        logoutBtn.className = 'btn-logout';
+        logoutBtn.textContent = 'Déconnexion';
+        logoutBtn.style.marginLeft = '10px';
+        logoutBtn.onclick = confirmLogout;
+        document.querySelector('.header-user').appendChild(logoutBtn);
 
         // Remplir les catégories dans le modal
         (function() {
