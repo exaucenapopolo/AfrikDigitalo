@@ -4,24 +4,51 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tableau de bord - AfrikDigitalo</title>
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* (même style que précédemment) */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            --primary: #FF6B35;
+            --secondary: #2E4057;
+            --accent-green: #27AE60;
+            --accent-blue: #3498DB;
+            --light-bg: #F8F9FA;
+            --dark: #2C3E50;
+            --text: #4A5568;
+            --white: #FFFFFF;
+            --gray-light: #E2E8F0;
+            --danger: #E74C3C;
+            --warning: #F39C12;
+            --success: #27AE60;
+        }
         body {
             font-family: 'Open Sans', sans-serif;
-            background: #f5f7fa;
+            background: var(--light-bg);
+            color: var(--text);
         }
         .dashboard {
             display: flex;
             min-height: 100vh;
         }
+        /* Sidebar */
         .sidebar {
             width: 280px;
-            background: #2E4057;
+            background: var(--secondary);
             color: white;
             padding: 30px 0;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
         }
         .sidebar .logo {
             display: flex;
@@ -32,13 +59,14 @@
         }
         .sidebar .logo i {
             font-size: 2rem;
-            color: #FF6B35;
+            color: var(--primary);
         }
         .sidebar .logo span {
             font-size: 1.5rem;
             font-weight: 700;
+            color: white;
         }
-        .sidebar .logo .highlight { color: #FF6B35; }
+        .sidebar .logo .highlight { color: var(--primary); }
         .sidebar nav ul {
             list-style: none;
         }
@@ -53,30 +81,39 @@
             color: #ddd;
             text-decoration: none;
             transition: all 0.3s;
+            border-left: 4px solid transparent;
         }
         .sidebar nav ul li a:hover,
         .sidebar nav ul li a.active {
             background: rgba(255,107,53,0.2);
             color: white;
-            border-left: 4px solid #FF6B35;
+            border-left-color: var(--primary);
         }
         .sidebar nav ul li a i {
             width: 20px;
             font-size: 1.2rem;
         }
+        /* Main content */
         .main-content {
             flex: 1;
             padding: 30px;
+            overflow-x: hidden;
         }
+        /* Header */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 30px;
+            background: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
         .header h1 {
-            font-size: 2rem;
-            color: #2E4057;
+            font-size: 1.8rem;
+            color: var(--secondary);
+            font-weight: 600;
         }
         .user-info {
             display: flex;
@@ -88,7 +125,53 @@
             height: 50px;
             border-radius: 50%;
             object-fit: cover;
+            border: 2px solid var(--primary);
         }
+        .btn-logout {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        .btn-logout:hover {
+            background: #e55a2b;
+        }
+        /* Email verification banner */
+        .verification-banner {
+            background: #fff3cd;
+            border-left: 4px solid var(--warning);
+            padding: 15px 20px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .verification-banner p {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #856404;
+        }
+        .verification-banner button {
+            background: var(--warning);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .verification-banner button:hover {
+            background: #e0a800;
+        }
+        /* Stats cards */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -103,6 +186,10 @@
             display: flex;
             align-items: center;
             gap: 20px;
+            transition: transform 0.3s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
         }
         .stat-icon {
             width: 60px;
@@ -113,7 +200,7 @@
             align-items: center;
             justify-content: center;
             font-size: 2rem;
-            color: #FF6B35;
+            color: var(--primary);
         }
         .stat-details h3 {
             font-size: 1rem;
@@ -123,42 +210,169 @@
         .stat-details p {
             font-size: 2rem;
             font-weight: 700;
-            color: #2E4057;
+            color: var(--secondary);
         }
-        .recent-activity {
+        /* Chart container */
+        .chart-container {
             background: white;
             border-radius: 10px;
             padding: 25px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            margin-bottom: 40px;
         }
-        .recent-activity h2 {
+        .chart-container h2 {
             margin-bottom: 20px;
-            color: #2E4057;
+            color: var(--secondary);
+            font-size: 1.3rem;
         }
-        .activity-item {
+        /* Services grid (pour créateurs) */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        .service-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+            position: relative;
+        }
+        .service-card:hover {
+            transform: translateY(-5px);
+        }
+        .service-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: var(--secondary);
+        }
+        .service-card p {
+            color: #777;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+        .service-price {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        .service-actions {
             display: flex;
-            justify-content: space-between;
-            padding: 15px 0;
-            border-bottom: 1px solid #eee;
+            gap: 10px;
         }
-        .activity-item:last-child {
-            border-bottom: none;
+        .btn-edit, .btn-delete {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
         }
-        .btn-logout {
-            background: #FF6B35;
+        .btn-edit {
+            background: var(--accent-blue);
+            color: white;
+        }
+        .btn-delete {
+            background: var(--danger);
+            color: white;
+        }
+        .btn-add {
+            background: var(--accent-green);
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        /* Commandes table */
+        .orders-table {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            margin-bottom: 40px;
+            overflow-x: auto;
+        }
+        .orders-table h2 {
+            margin-bottom: 20px;
+            color: var(--secondary);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            text-align: left;
+            padding: 12px;
+            background: var(--light-bg);
+            color: var(--secondary);
+            font-weight: 600;
+        }
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--gray-light);
+        }
+        .badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .badge.success { background: #d4edda; color: #155724; }
+        .badge.warning { background: #fff3cd; color: #856404; }
+        .badge.danger { background: #f8d7da; color: #721c24; }
+        /* Profil edit */
+        .profile-form {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            max-width: 600px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--secondary);
+        }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid var(--gray-light);
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+        .form-group input:focus, .form-group textarea:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+        .btn-save {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 30px;
             border-radius: 5px;
             cursor: pointer;
             font-weight: 600;
         }
+        /* Toast */
         .toast {
             position: fixed;
             top: 20px;
             right: 20px;
             background: white;
-            border-left: 4px solid #FF6B35;
+            border-left: 4px solid var(--primary);
             border-radius: 5px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
             padding: 15px 25px;
@@ -170,13 +384,23 @@
             transition: transform 0.3s;
         }
         .toast.show { transform: translateX(0); }
-        .toast.error { border-left-color: #E74C3C; }
+        .toast.success { border-left-color: var(--success); }
+        .toast.error { border-left-color: var(--danger); }
+        .toast.warning { border-left-color: var(--warning); }
+        /* Sections cachées */
+        .section {
+            display: none;
+        }
+        .section.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
     <div id="toast" class="toast"></div>
 
     <div class="dashboard">
+        <!-- Sidebar -->
         <aside class="sidebar">
             <div class="logo">
                 <i class="fas fa-globe-africa"></i>
@@ -184,15 +408,18 @@
             </div>
             <nav>
                 <ul>
-                    <li><a href="dashboard.html" class="active"><i class="fas fa-home"></i> Accueil</a></li>
-                    <li><a href="#" id="menuServices"><i class="fas fa-list"></i> Mes services</a></li>
-                    <li><a href="#" id="menuCommandes"><i class="fas fa-shopping-bag"></i> Commandes</a></li>
-                    <li><a href="#" id="menuMessages"><i class="fas fa-envelope"></i> Messages</a></li>
-                    <li><a href="#" id="menuProfil"><i class="fas fa-user"></i> Profil</a></li>
-                    <li><a href="#" id="menuParametres"><i class="fas fa-cog"></i> Paramètres</a></li>
+                    <li><a href="#" class="nav-link active" data-section="dashboard"><i class="fas fa-home"></i> Accueil</a></li>
+                    <li><a href="#" class="nav-link" data-section="services"><i class="fas fa-list"></i> Mes services</a></li>
+                    <li><a href="#" class="nav-link" data-section="orders"><i class="fas fa-shopping-bag"></i> Commandes</a></li>
+                    <li><a href="#" class="nav-link" data-section="messages"><i class="fas fa-envelope"></i> Messages</a></li>
+                    <li><a href="#" class="nav-link" data-section="profile"><i class="fas fa-user"></i> Profil</a></li>
+                    <li><a href="#" class="nav-link" data-section="settings"><i class="fas fa-cog"></i> Paramètres</a></li>
+                    <li><a href="#" class="nav-link" data-section="analytics"><i class="fas fa-chart-line"></i> Analytiques</a></li>
                 </ul>
             </nav>
         </aside>
+
+        <!-- Main content -->
         <main class="main-content">
             <div class="header">
                 <h1 id="dashboardTitle">Tableau de bord</h1>
@@ -202,49 +429,160 @@
                     <button class="btn-logout" id="logoutBtn">Déconnexion</button>
                 </div>
             </div>
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
-                    <div class="stat-details">
-                        <h3>Revenus totaux</h3>
-                        <p id="totalRevenue">0 FCFA</p>
-                    </div>
+
+            <!-- Bannière de vérification d'email -->
+            <div id="verificationBanner" class="verification-banner" style="display: none;">
+                <p><i class="fas fa-exclamation-triangle"></i> Votre adresse email n'est pas encore vérifiée. Veuillez vérifier votre boîte mail pour activer votre compte.</p>
+                <button id="resendVerificationBtn">Renvoyer l'email</button>
+            </div>
+
+            <!-- Sections dynamiques -->
+            <!-- Section Accueil -->
+            <div id="section-dashboard" class="section active">
+                <div class="stats-grid" id="statsGrid">
+                    <!-- Stats chargées dynamiquement -->
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="fas fa-shopping-cart"></i></div>
-                    <div class="stat-details">
-                        <h3>Commandes</h3>
-                        <p id="totalOrders">0</p>
-                    </div>
+                <div class="chart-container">
+                    <h2>Activité récente</h2>
+                    <canvas id="activityChart"></canvas>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="fas fa-star"></i></div>
-                    <div class="stat-details">
-                        <h3>Note moyenne</h3>
-                        <p id="avgRating">4.8</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="fas fa-users"></i></div>
-                    <div class="stat-details">
-                        <h3>Clients</h3>
-                        <p id="totalClients">12</p>
-                    </div>
+                <div class="recent-activity">
+                    <h2>Dernières commandes</h2>
+                    <div id="recentOrdersList"></div>
                 </div>
             </div>
-            <div class="recent-activity">
-                <h2>Activité récente</h2>
-                <div id="activityList">
-                    <!-- Activités chargées dynamiquement -->
+
+            <!-- Section Mes services (pour créateurs) -->
+            <div id="section-services" class="section">
+                <button class="btn-add" id="addServiceBtn"><i class="fas fa-plus"></i> Ajouter un service</button>
+                <div class="services-grid" id="servicesList"></div>
+                <!-- Modal pour ajouter/modifier service (simple) -->
+                <div id="serviceModal" style="display: none; background: white; padding: 30px; border-radius: 10px; max-width: 500px; margin: 20px auto; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                    <h3 id="modalTitle">Ajouter un service</h3>
+                    <form id="serviceForm">
+                        <div class="form-group">
+                            <label>Titre</label>
+                            <input type="text" id="serviceTitle" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea id="serviceDesc" rows="3" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Prix (FCFA)</label>
+                            <input type="number" id="servicePrice" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Catégorie</label>
+                            <select id="serviceCategory">
+                                <!-- Options chargées depuis la liste -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Délai de livraison (jours)</label>
+                            <input type="number" id="serviceDelivery" value="3">
+                        </div>
+                        <button type="submit" class="btn-save">Enregistrer</button>
+                        <button type="button" onclick="closeModal()">Annuler</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Section Commandes -->
+            <div id="section-orders" class="section">
+                <div class="orders-table">
+                    <h2>Historique des commandes</h2>
+                    <table id="ordersTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Service</th>
+                                <th>Client/Créateur</th>
+                                <th>Montant</th>
+                                <th>Statut</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Section Messages (simulée) -->
+            <div id="section-messages" class="section">
+                <div class="orders-table">
+                    <h2>Messages récents</h2>
+                    <p>Fonctionnalité à venir.</p>
+                </div>
+            </div>
+
+            <!-- Section Profil -->
+            <div id="section-profile" class="section">
+                <div class="profile-form">
+                    <h2>Modifier mon profil</h2>
+                    <form id="profileForm">
+                        <div class="form-group">
+                            <label>Nom complet</label>
+                            <input type="text" id="profileName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="profileEmail" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>Numéro WhatsApp</label>
+                            <input type="tel" id="profileWhatsapp" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Pays</label>
+                            <select id="profileCountry" required>
+                                <!-- Options pays -->
+                            </select>
+                        </div>
+                        <div class="form-group" id="profileCompanyGroup" style="display: none;">
+                            <label>Nom de l'entreprise</label>
+                            <input type="text" id="profileCompany">
+                        </div>
+                        <div class="form-group" id="profileCategoryGroup" style="display: none;">
+                            <label>Catégorie principale</label>
+                            <select id="profileCategory"></select>
+                        </div>
+                        <div class="form-group" id="profileDescGroup" style="display: none;">
+                            <label>Description</label>
+                            <textarea id="profileDesc" rows="3"></textarea>
+                        </div>
+                        <button type="submit" class="btn-save">Mettre à jour</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Section Paramètres (simulée) -->
+            <div id="section-settings" class="section">
+                <div class="orders-table">
+                    <h2>Paramètres du compte</h2>
+                    <p>Gérez vos préférences, notifications, etc.</p>
+                </div>
+            </div>
+
+            <!-- Section Analytiques (simulée) -->
+            <div id="section-analytics" class="section">
+                <div class="chart-container">
+                    <h2>Vues des services</h2>
+                    <canvas id="analyticsChart"></canvas>
                 </div>
             </div>
         </main>
     </div>
 
+    <!-- Overlay modal simple -->
+    <div id="modalOverlay" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index: 9998;" onclick="closeModal()"></div>
+
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script>
+        // Configuration Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAWlhXhkaOei9RzX8hCNcCXnpjWVId_s48",
             authDomain: "madil-be5be.firebaseapp.com",
@@ -259,82 +597,403 @@
         const db = firebase.firestore();
 
         // Éléments DOM
+        const sections = document.querySelectorAll('.section');
+        const navLinks = document.querySelectorAll('.nav-link');
         const userNameSpan = document.getElementById('userName');
         const userAvatar = document.getElementById('userAvatar');
         const logoutBtn = document.getElementById('logoutBtn');
         const dashboardTitle = document.getElementById('dashboardTitle');
-        const activityList = document.getElementById('activityList');
-        const totalRevenue = document.getElementById('totalRevenue');
-        const totalOrders = document.getElementById('totalOrders');
-        const avgRating = document.getElementById('avgRating');
-        const totalClients = document.getElementById('totalClients');
+        const verificationBanner = document.getElementById('verificationBanner');
+        const resendBtn = document.getElementById('resendVerificationBtn');
 
+        // Variables globales
+        let currentUser = null;
+        let userData = null;
+        let activityChart, analyticsChart;
+
+        // Fonctions utilitaires
         function showToast(message, type = 'info') {
             const toast = document.getElementById('toast');
             toast.className = `toast ${type} show`;
-            toast.innerHTML = (type === 'error' ? '<i class="fas fa-exclamation-circle"></i> ' : '<i class="fas fa-info-circle"></i> ') + message;
+            toast.innerHTML = (type === 'success' ? '<i class="fas fa-check-circle"></i> ' : 
+                              type === 'error' ? '<i class="fas fa-exclamation-circle"></i> ' : 
+                              '<i class="fas fa-info-circle"></i> ') + message;
             setTimeout(() => toast.classList.remove('show'), 4000);
         }
 
-        // Vérification de l'utilisateur connecté et vérifié
-        auth.onAuthStateChanged(async (user) => {
-            if (!user) {
-                window.location.href = 'login.html';
-                return;
-            }
-            if (!user.emailVerified) {
-                // Non vérifié, rediriger vers login avec message
-                showToast('Veuillez vérifier votre email avant d\'accéder au tableau de bord.', 'error');
-                setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 2000);
-                return;
-            }
-            // Utilisateur vérifié, charger les données
-            try {
-                const doc = await db.collection('users').doc(user.uid).get();
-                if (doc.exists) {
-                    const data = doc.data();
-                    userNameSpan.textContent = data.name || user.email;
-                    userAvatar.src = data.photoURL || 'https://randomuser.me/api/portraits/lego/1.jpg';
-                    if (data.role === 'creator') {
-                        dashboardTitle.textContent = 'Tableau de bord créateur';
-                    } else {
-                        dashboardTitle.textContent = 'Tableau de bord acheteur';
-                    }
-                }
-            } catch (error) {
-                console.error(error);
-            }
-            loadActivities();
+        // Gestion de la navigation
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const sectionId = link.dataset.section;
+                // Mettre à jour les classes actives
+                navLinks.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+                // Afficher la bonne section
+                sections.forEach(s => s.classList.remove('active'));
+                document.getElementById(`section-${sectionId}`).classList.add('active');
+            });
         });
 
+        // Déconnexion
         logoutBtn.addEventListener('click', () => {
             auth.signOut().then(() => {
                 window.location.href = 'index.html';
             });
         });
 
-        function loadActivities() {
-            activityList.innerHTML = `
+        // Renvoyer l'email de vérification
+        resendBtn.addEventListener('click', async () => {
+            if (auth.currentUser) {
+                try {
+                    await auth.currentUser.sendEmailVerification();
+                    showToast('Email de vérification renvoyé. Vérifiez votre boîte mail.', 'success');
+                } catch (error) {
+                    showToast(error.message, 'error');
+                }
+            }
+        });
+
+        // Chargement des catégories pour le formulaire service
+        const categories = [
+            "Développement web", "Développement mobile", "Design graphique", "Illustration", "Logo design",
+            "UI/UX design", "Motion design", "Montage vidéo", "Animation 2D/3D", "Photographie",
+            "Rédaction web", "Copywriting", "Traduction", "Relecture", "Community management",
+            "Marketing digital", "SEO", "Publicité en ligne", "Email marketing", "Influence",
+            "Musique", "Composition", "Mixage audio", "Podcast", "Voix off",
+            "Conseil", "Coaching", "Formation en ligne", "E-learning", "Création de contenu",
+            "Gestion de projet", "Assistanat virtuel", "Saisie de données", "Transcription", "Recherche",
+            "Architecture", "Ingénierie", "Comptabilité", "Juridique", "Traductions techniques",
+            "Jeux vidéo", "Réalité virtuelle", "Intelligence artificielle", "Blockchain", "Cybersécurité",
+            "Réseaux", "Support technique", "Administration système", "Cloud computing", "Data science"
+        ];
+
+        // Remplir les selects
+        function populateCategories(selectElement) {
+            if (!selectElement) return;
+            selectElement.innerHTML = '<option value="">Sélectionnez</option>';
+            categories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat;
+                option.textContent = cat;
+                selectElement.appendChild(option);
+            });
+        }
+
+        // Initialiser les selects
+        populateCategories(document.getElementById('serviceCategory'));
+        populateCategories(document.getElementById('profileCategory'));
+
+        // Gestion de l'état d'authentification
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            currentUser = user;
+
+            // Vérifier l'email
+            if (!user.emailVerified) {
+                verificationBanner.style.display = 'flex';
+            } else {
+                verificationBanner.style.display = 'none';
+            }
+
+            // Charger les données utilisateur depuis Firestore
+            try {
+                const doc = await db.collection('users').doc(user.uid).get();
+                if (doc.exists) {
+                    userData = doc.data();
+                    userNameSpan.textContent = userData.name || user.email;
+                    userAvatar.src = userData.photoURL || 'https://randomuser.me/api/portraits/lego/1.jpg';
+                    // Ajuster le titre selon le rôle
+                    if (userData.role === 'creator') {
+                        dashboardTitle.textContent = 'Tableau de bord créateur';
+                        // Afficher les sections créateur
+                        document.querySelector('[data-section="services"]').style.display = 'flex';
+                    } else {
+                        dashboardTitle.textContent = 'Tableau de bord acheteur';
+                        document.querySelector('[data-section="services"]').style.display = 'none';
+                    }
+                    // Pré-remplir le formulaire de profil
+                    document.getElementById('profileName').value = userData.name || '';
+                    document.getElementById('profileEmail').value = user.email;
+                    document.getElementById('profileWhatsapp').value = userData.whatsapp || '';
+                    document.getElementById('profileCountry').value = userData.country || '';
+                    if (userData.role === 'creator') {
+                        document.getElementById('profileCompanyGroup').style.display = 'block';
+                        document.getElementById('profileCategoryGroup').style.display = 'block';
+                        document.getElementById('profileDescGroup').style.display = 'block';
+                        document.getElementById('profileCompany').value = userData.company || '';
+                        document.getElementById('profileCategory').value = userData.category || '';
+                        document.getElementById('profileDesc').value = userData.description || '';
+                    } else {
+                        document.getElementById('profileCompanyGroup').style.display = 'none';
+                        document.getElementById('profileCategoryGroup').style.display = 'none';
+                        document.getElementById('profileDescGroup').style.display = 'none';
+                    }
+                }
+            } catch (error) {
+                console.error(error);
+                showToast('Erreur chargement profil', 'error');
+            }
+
+            // Charger les données du tableau de bord
+            loadDashboardStats();
+            loadRecentOrders();
+            loadServices();
+            loadOrdersTable();
+            initCharts();
+        });
+
+        // Charger les statistiques de l'accueil
+        async function loadDashboardStats() {
+            const statsGrid = document.getElementById('statsGrid');
+            if (!userData) return;
+            // Simuler des stats selon le rôle
+            if (userData.role === 'creator') {
+                statsGrid.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
+                        <div class="stat-details">
+                            <h3>Revenus totaux</h3>
+                            <p>125 000 FCFA</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-shopping-cart"></i></div>
+                        <div class="stat-details">
+                            <h3>Commandes</h3>
+                            <p>24</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-star"></i></div>
+                        <div class="stat-details">
+                            <h3>Note moyenne</h3>
+                            <p>4.8</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-users"></i></div>
+                        <div class="stat-details">
+                            <h3>Clients</h3>
+                            <p>18</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                statsGrid.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-shopping-bag"></i></div>
+                        <div class="stat-details">
+                            <h3>Services achetés</h3>
+                            <p>8</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                        <div class="stat-details">
+                            <h3>Dépenses totales</h3>
+                            <p>45 000 FCFA</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-heart"></i></div>
+                        <div class="stat-details">
+                            <h3>Favoris</h3>
+                            <p>12</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-star"></i></div>
+                        <div class="stat-details">
+                            <h3>Avis donnés</h3>
+                            <p>5</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Charger les commandes récentes
+        function loadRecentOrders() {
+            const recentDiv = document.getElementById('recentOrdersList');
+            recentDiv.innerHTML = `
                 <div class="activity-item">
-                    <span>Nouvelle commande de <strong>Jean Dupont</strong></span>
+                    <span>Logo design - <strong>Jean Dupont</strong></span>
                     <span>Il y a 5 min</span>
                 </div>
                 <div class="activity-item">
-                    <span>Service <strong>Logo design</strong> terminé</span>
+                    <span>Développement site - <strong>Marie Diop</strong></span>
                     <span>Il y a 2 heures</span>
                 </div>
                 <div class="activity-item">
-                    <span>Paiement de 50 000 FCFA reçu</span>
+                    <span>Rédaction web - <strong>Amadou Diallo</strong></span>
                     <span>Hier</span>
                 </div>
             `;
-            totalRevenue.textContent = '125 000 FCFA';
-            totalOrders.textContent = '8';
-            avgRating.textContent = '4.9';
-            totalClients.textContent = '15';
         }
+
+        // Charger les services (pour créateurs)
+        async function loadServices() {
+            const servicesList = document.getElementById('servicesList');
+            if (!userData || userData.role !== 'creator') return;
+            // Récupérer les services depuis Firestore
+            const snapshot = await db.collection('services').where('creatorId', '==', auth.currentUser.uid).get();
+            if (snapshot.empty) {
+                servicesList.innerHTML = '<p>Aucun service pour le moment. Cliquez sur "Ajouter un service".</p>';
+                return;
+            }
+            servicesList.innerHTML = '';
+            snapshot.forEach(doc => {
+                const s = doc.data();
+                const card = document.createElement('div');
+                card.className = 'service-card';
+                card.innerHTML = `
+                    <h3>${s.title}</h3>
+                    <p>${s.description.substring(0, 60)}...</p>
+                    <div class="service-price">${s.price} FCFA</div>
+                    <div class="service-actions">
+                        <button class="btn-edit" onclick="editService('${doc.id}')"><i class="fas fa-edit"></i> Modifier</button>
+                        <button class="btn-delete" onclick="deleteService('${doc.id}')"><i class="fas fa-trash"></i> Supprimer</button>
+                    </div>
+                `;
+                servicesList.appendChild(card);
+            });
+        }
+
+        // Ajouter un service
+        document.getElementById('addServiceBtn')?.addEventListener('click', () => {
+            openModal();
+        });
+
+        function openModal(serviceId = null) {
+            document.getElementById('serviceModal').style.display = 'block';
+            document.getElementById('modalOverlay').style.display = 'block';
+            // Si édition, charger les données
+        }
+
+        function closeModal() {
+            document.getElementById('serviceModal').style.display = 'none';
+            document.getElementById('modalOverlay').style.display = 'none';
+        }
+
+        // Soumission du formulaire service
+        document.getElementById('serviceForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = document.getElementById('serviceTitle').value;
+            const desc = document.getElementById('serviceDesc').value;
+            const price = parseFloat(document.getElementById('servicePrice').value);
+            const category = document.getElementById('serviceCategory').value;
+            const delivery = document.getElementById('serviceDelivery').value;
+            if (!title || !desc || !price || !category) {
+                showToast('Veuillez remplir tous les champs', 'error');
+                return;
+            }
+            const serviceData = {
+                creatorId: auth.currentUser.uid,
+                title,
+                description: desc,
+                price,
+                category,
+                deliveryDays: parseInt(delivery),
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            try {
+                await db.collection('services').add(serviceData);
+                showToast('Service ajouté avec succès', 'success');
+                closeModal();
+                loadServices();
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        });
+
+        // Charger le tableau des commandes
+        async function loadOrdersTable() {
+            const tbody = document.getElementById('ordersBody');
+            // Données simulées
+            tbody.innerHTML = `
+                <tr>
+                    <td>#12345</td>
+                    <td>Logo design</td>
+                    <td>Jean Dupont</td>
+                    <td>25 000 FCFA</td>
+                    <td><span class="badge success">Terminé</span></td>
+                    <td>01/03/2026</td>
+                    <td><button class="btn-edit">Voir</button></td>
+                </tr>
+                <tr>
+                    <td>#12346</td>
+                    <td>Développement site</td>
+                    <td>Marie Diop</td>
+                    <td>150 000 FCFA</td>
+                    <td><span class="badge warning">En cours</span></td>
+                    <td>28/02/2026</td>
+                    <td><button class="btn-edit">Voir</button></td>
+                </tr>
+            `;
+        }
+
+        // Initialiser les graphiques
+        function initCharts() {
+            const ctx1 = document.getElementById('activityChart')?.getContext('2d');
+            if (ctx1) {
+                activityChart = new Chart(ctx1, {
+                    type: 'line',
+                    data: {
+                        labels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
+                        datasets: [{
+                            label: 'Commandes',
+                            data: [3, 5, 2, 8, 6, 4, 7],
+                            borderColor: '#FF6B35',
+                            backgroundColor: 'rgba(255,107,53,0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+            }
+            const ctx2 = document.getElementById('analyticsChart')?.getContext('2d');
+            if (ctx2) {
+                analyticsChart = new Chart(ctx2, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Design', 'Dev', 'Marketing', 'Vidéo', 'Musique'],
+                        datasets: [{
+                            label: 'Vues',
+                            data: [45, 30, 25, 18, 12],
+                            backgroundColor: '#2E4057'
+                        }]
+                    }
+                });
+            }
+        }
+
+        // Mise à jour du profil
+        document.getElementById('profileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const updates = {
+                name: document.getElementById('profileName').value,
+                whatsapp: document.getElementById('profileWhatsapp').value,
+                country: document.getElementById('profileCountry').value
+            };
+            if (userData.role === 'creator') {
+                updates.company = document.getElementById('profileCompany').value;
+                updates.category = document.getElementById('profileCategory').value;
+                updates.description = document.getElementById('profileDesc').value;
+            }
+            try {
+                await db.collection('users').doc(auth.currentUser.uid).update(updates);
+                showToast('Profil mis à jour', 'success');
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        });
     </script>
 </body>
 </html>
