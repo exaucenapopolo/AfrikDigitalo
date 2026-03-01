@@ -15,6 +15,7 @@
             <span>Afrik<span class="highlight">Digitalo</span></span>
         </div>
         <div class="header-user">
+            <span id="headerBalance" style="font-weight:600; margin-right:10px;"></span>
             <span id="headerUserName">Utilisateur</span>
             <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
             <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
@@ -106,17 +107,19 @@
                 return;
             }
             let html = '<div class="orders-table"><h2>Commandes</h2><table><thead><tr><th>ID</th><th>Service</th><th>Montant</th><th>Statut</th><th>Date</th></tr></thead><tbody>';
-            orders.forEach(doc => {
+            for (const doc of orders.docs) {
                 const o = doc.data();
+                const serviceDoc = await db.collection('services').doc(o.serviceId).get();
+                const serviceTitle = serviceDoc.exists ? serviceDoc.data().title : 'Service inconnu';
                 const date = o.createdAt ? new Date(o.createdAt.toDate()).toLocaleDateString() : 'N/A';
                 html += `<tr>
                     <td>${doc.id.slice(0, 6)}...</td>
-                    <td>${o.serviceId}</td>
+                    <td>${serviceTitle}</td>
                     <td>${o.amount} FCFA</td>
                     <td><span class="badge ${o.status === 'completed' ? 'success' : o.status === 'pending' ? 'warning' : 'danger'}">${o.status}</span></td>
                     <td>${date}</td>
                 </tr>`;
-            });
+            }
             html += '</tbody></table></div>';
             listDiv.innerHTML = html;
         }
