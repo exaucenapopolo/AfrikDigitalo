@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de bord - AfrikDigitalo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* (même style que précédemment) */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background: #f5f7fa;
+        }
+        .dashboard {
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 280px;
+            background: #2E4057;
+            color: white;
+            padding: 30px 0;
+        }
+        .sidebar .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0 20px;
+            margin-bottom: 40px;
+        }
+        .sidebar .logo i {
+            font-size: 2rem;
+            color: #FF6B35;
+        }
+        .sidebar .logo span {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        .sidebar .logo .highlight { color: #FF6B35; }
+        .sidebar nav ul {
+            list-style: none;
+        }
+        .sidebar nav ul li {
+            margin-bottom: 5px;
+        }
+        .sidebar nav ul li a {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 20px;
+            color: #ddd;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        .sidebar nav ul li a:hover,
+        .sidebar nav ul li a.active {
+            background: rgba(255,107,53,0.2);
+            color: white;
+            border-left: 4px solid #FF6B35;
+        }
+        .sidebar nav ul li a i {
+            width: 20px;
+            font-size: 1.2rem;
+        }
+        .main-content {
+            flex: 1;
+            padding: 30px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 2rem;
+            color: #2E4057;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .user-info img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            background: #FFEAD2;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: #FF6B35;
+        }
+        .stat-details h3 {
+            font-size: 1rem;
+            color: #777;
+            font-weight: 400;
+        }
+        .stat-details p {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2E4057;
+        }
+        .recent-activity {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .recent-activity h2 {
+            margin-bottom: 20px;
+            color: #2E4057;
+        }
+        .activity-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+        .btn-logout {
+            background: #FF6B35;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border-left: 4px solid #FF6B35;
+            border-radius: 5px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            padding: 15px 25px;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateX(400px);
+            transition: transform 0.3s;
+        }
+        .toast.show { transform: translateX(0); }
+        .toast.error { border-left-color: #E74C3C; }
+    </style>
+</head>
+<body>
+    <div id="toast" class="toast"></div>
+
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fas fa-globe-africa"></i>
+                <span>Afrik<span class="highlight">Digitalo</span></span>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="dashboard.html" class="active"><i class="fas fa-home"></i> Accueil</a></li>
+                    <li><a href="#" id="menuServices"><i class="fas fa-list"></i> Mes services</a></li>
+                    <li><a href="#" id="menuCommandes"><i class="fas fa-shopping-bag"></i> Commandes</a></li>
+                    <li><a href="#" id="menuMessages"><i class="fas fa-envelope"></i> Messages</a></li>
+                    <li><a href="#" id="menuProfil"><i class="fas fa-user"></i> Profil</a></li>
+                    <li><a href="#" id="menuParametres"><i class="fas fa-cog"></i> Paramètres</a></li>
+                </ul>
+            </nav>
+        </aside>
+        <main class="main-content">
+            <div class="header">
+                <h1 id="dashboardTitle">Tableau de bord</h1>
+                <div class="user-info">
+                    <span id="userName">Utilisateur</span>
+                    <img id="userAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
+                    <button class="btn-logout" id="logoutBtn">Déconnexion</button>
+                </div>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
+                    <div class="stat-details">
+                        <h3>Revenus totaux</h3>
+                        <p id="totalRevenue">0 FCFA</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-shopping-cart"></i></div>
+                    <div class="stat-details">
+                        <h3>Commandes</h3>
+                        <p id="totalOrders">0</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-star"></i></div>
+                    <div class="stat-details">
+                        <h3>Note moyenne</h3>
+                        <p id="avgRating">4.8</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-users"></i></div>
+                    <div class="stat-details">
+                        <h3>Clients</h3>
+                        <p id="totalClients">12</p>
+                    </div>
+                </div>
+            </div>
+            <div class="recent-activity">
+                <h2>Activité récente</h2>
+                <div id="activityList">
+                    <!-- Activités chargées dynamiquement -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAWlhXhkaOei9RzX8hCNcCXnpjWVId_s48",
+            authDomain: "madil-be5be.firebaseapp.com",
+            projectId: "madil-be5be",
+            storageBucket: "madil-be5be.firebasestorage.app",
+            messagingSenderId: "2892375937",
+            appId: "1:2892375937:web:8d8381c7914cbd328aaa80",
+            measurementId: "G-ZKXRFQDG93"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Éléments DOM
+        const userNameSpan = document.getElementById('userName');
+        const userAvatar = document.getElementById('userAvatar');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const dashboardTitle = document.getElementById('dashboardTitle');
+        const activityList = document.getElementById('activityList');
+        const totalRevenue = document.getElementById('totalRevenue');
+        const totalOrders = document.getElementById('totalOrders');
+        const avgRating = document.getElementById('avgRating');
+        const totalClients = document.getElementById('totalClients');
+
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.className = `toast ${type} show`;
+            toast.innerHTML = (type === 'error' ? '<i class="fas fa-exclamation-circle"></i> ' : '<i class="fas fa-info-circle"></i> ') + message;
+            setTimeout(() => toast.classList.remove('show'), 4000);
+        }
+
+        // Vérification de l'utilisateur connecté et vérifié
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            if (!user.emailVerified) {
+                // Non vérifié, rediriger vers login avec message
+                showToast('Veuillez vérifier votre email avant d\'accéder au tableau de bord.', 'error');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+                return;
+            }
+            // Utilisateur vérifié, charger les données
+            try {
+                const doc = await db.collection('users').doc(user.uid).get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    userNameSpan.textContent = data.name || user.email;
+                    userAvatar.src = data.photoURL || 'https://randomuser.me/api/portraits/lego/1.jpg';
+                    if (data.role === 'creator') {
+                        dashboardTitle.textContent = 'Tableau de bord créateur';
+                    } else {
+                        dashboardTitle.textContent = 'Tableau de bord acheteur';
+                    }
+                }
+            } catch (error) {
+                console.error(error);
+            }
+            loadActivities();
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            auth.signOut().then(() => {
+                window.location.href = 'index.html';
+            });
+        });
+
+        function loadActivities() {
+            activityList.innerHTML = `
+                <div class="activity-item">
+                    <span>Nouvelle commande de <strong>Jean Dupont</strong></span>
+                    <span>Il y a 5 min</span>
+                </div>
+                <div class="activity-item">
+                    <span>Service <strong>Logo design</strong> terminé</span>
+                    <span>Il y a 2 heures</span>
+                </div>
+                <div class="activity-item">
+                    <span>Paiement de 50 000 FCFA reçu</span>
+                    <span>Hier</span>
+                </div>
+            `;
+            totalRevenue.textContent = '125 000 FCFA';
+            totalOrders.textContent = '8';
+            avgRating.textContent = '4.9';
+            totalClients.textContent = '15';
+        }
+    </script>
+</body>
+</html>

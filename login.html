@@ -16,6 +16,7 @@
             --text: #4A5568;
             --white: #FFFFFF;
             --gray-light: #E2E8F0;
+            --danger: #E74C3C;
         }
         body {
             font-family: 'Open Sans', sans-serif;
@@ -94,6 +95,10 @@
         .btn:hover {
             background: #e55a2b;
         }
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
         .links {
             text-align: center;
             margin-top: 20px;
@@ -107,13 +112,7 @@
             text-decoration: underline;
         }
         .error-message {
-            color: #dc3545;
-            font-size: 0.9rem;
-            margin-top: 5px;
-            display: none;
-        }
-        .success-message {
-            color: var(--accent-green);
+            color: var(--danger);
             font-size: 0.9rem;
             margin-top: 5px;
             display: none;
@@ -125,10 +124,46 @@
             border-radius: 5px;
             margin-bottom: 20px;
             font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
+        .resend-btn {
+            background: transparent;
+            border: 1px solid #3498DB;
+            color: #3498DB;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-left: 10px;
+        }
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border-left: 4px solid var(--primary);
+            border-radius: 5px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            padding: 15px 25px;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateX(400px);
+            transition: transform 0.3s;
+        }
+        .toast.show {
+            transform: translateX(0);
+        }
+        .toast.success { border-left-color: var(--accent-green); }
+        .toast.error { border-left-color: var(--danger); }
     </style>
 </head>
 <body>
+    <div id="toast" class="toast"></div>
+
     <div class="login-container">
         <div class="logo">
             <i class="fas fa-globe-africa"></i>
@@ -136,7 +171,8 @@
         </div>
         <h2>Connexion</h2>
         <div class="info-message" id="verifyMessage" style="display: none;">
-            <i class="fas fa-envelope"></i> Veuillez vérifier votre email avant de vous connecter.
+            <i class="fas fa-envelope"></i> Votre email n'est pas encore vérifié. Veuillez vérifier votre boîte mail.
+            <button class="resend-btn" id="resendVerificationBtn">Renvoyer</button>
         </div>
         <form id="loginForm">
             <div class="form-group">
@@ -171,11 +207,29 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
 
-        // Vérifier si l'utilisateur vient de s'inscrire (via paramètre URL)
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('verified') === 'true') {
-            document.getElementById('verifyMessage').style.display = 'block';
+        // Toast
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.className = `toast ${type} show`;
+            if (type === 'success') toast.innerHTML = '<i class="fas fa-check-circle"></i> ' + message;
+            else if (type === 'error') toast.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + message;
+            else toast.innerHTML = '<i class="fas fa-info-circle"></i> ' + message;
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 5000);
         }
+
+        // Vérifier si l'utilisateur est déjà connecté et vérifié
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                if (user.emailVerified) {
+                    window.location.href = 'dashboard.html';
+                } else {
+                    // Afficher le message de vérification
+                    document.getElementById('verifyMessage').style.display = 'flex';
+                }
+            }
+        });
 
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -183,22 +237,44 @@
             const password = document.getElementById('password').value;
             const errorMsg = document.getElementById('errorMsg');
             errorMsg.style.display = 'none';
+            const submitBtn = document.querySelector('#loginForm button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Connexion...';
 
             try {
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
                 const user = userCredential.user;
                 if (!user.emailVerified) {
                     // Email non vérifié
-                    errorMsg.textContent = 'Veuillez vérifier votre email avant de vous connecter. Un nouveau lien de vérification a été envoyé.';
+                    errorMsg.textContent = 'Veuillez vérifier votre email avant de vous connecter.';
                     errorMsg.style.display = 'block';
-                    await user.sendEmailVerification();
-                    return;
+                    document.getElementById('verifyMessage').style.display = 'flex';
+                    // Stocker l'utilisateur pour renvoi
+                    window.currentUser = user;
+                } else {
+                    // OK, rediriger
+                    window.location.href = 'dashboard.html';
                 }
-                // Connexion réussie, rediriger vers tableau de bord
-                window.location.href = 'dashboard.html';
             } catch (error) {
                 errorMsg.textContent = error.message;
                 errorMsg.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Se connecter';
+            }
+        });
+
+        // Renvoyer l'email de vérification
+        document.getElementById('resendVerificationBtn').addEventListener('click', async () => {
+            if (auth.currentUser) {
+                try {
+                    await auth.currentUser.sendEmailVerification();
+                    showToast('Email de vérification renvoyé. Vérifiez votre boîte mail.', 'success');
+                } catch (error) {
+                    showToast(error.message, 'error');
+                }
+            } else {
+                showToast('Aucun utilisateur connecté.', 'error');
             }
         });
 
@@ -209,9 +285,9 @@
             if (email) {
                 try {
                     await auth.sendPasswordResetEmail(email);
-                    alert('Un email de réinitialisation a été envoyé.');
+                    showToast('Un email de réinitialisation a été envoyé.', 'success');
                 } catch (error) {
-                    alert(error.message);
+                    showToast(error.message, 'error');
                 }
             }
         });
