@@ -15,6 +15,7 @@
             <span>Afrik<span class="highlight">Digitalo</span></span>
         </div>
         <div class="header-user">
+            <span id="headerBalance" style="font-weight:600; margin-right:10px;"></span>
             <span id="headerUserName">Utilisateur</span>
             <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
             <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
@@ -44,6 +45,14 @@
     <nav class="mobile-nav" id="mobileNav">
         <ul id="mobileNavList"></ul>
     </nav>
+
+    <!-- Modal pour afficher les détails d'un service -->
+    <div class="modal" id="serviceDetailModal">
+        <div class="modal-content" style="max-width: 700px;">
+            <span class="modal-close" onclick="closeServiceModal()">&times;</span>
+            <div id="serviceDetailContent"></div>
+        </div>
+    </div>
 
     <div class="modal" id="logoutModal">
         <div class="modal-content">
@@ -105,23 +114,75 @@
                 const s = doc.data();
                 const creatorDoc = await db.collection('users').doc(s.creatorId).get();
                 const creatorName = creatorDoc.exists ? creatorDoc.data().name : 'Inconnu';
+                // Récupérer le nombre de fois que ce service a été ajouté au panier
+                const cartCountSnap = await db.collection('cart').where('serviceId', '==', doc.id).get();
+                const cartCount = cartCountSnap.size;
+                // Récupérer le nombre de commandes pour ce service
+                const orderCountSnap = await db.collection('orders').where('serviceId', '==', doc.id).get();
+                const orderCount = orderCountSnap.size;
+
                 html += `
                     <div class="service-card">
                         ${s.image ? `<img src="${s.image}" alt="${s.title}" style="width:100%; height:150px; object-fit:cover; border-radius:5px; margin-bottom:10px;">` : ''}
                         <h3>${s.title}</h3>
-                        <p>${s.description.substring(0, 80)}...</p>
-                        <div><i class="fas fa-user"></i> ${creatorName}</div>
+                        <p>${s.description.substring(0, 80)}... <button class="btn-link" onclick="showServiceDetails('${doc.id}')">Voir plus</button></p>
+                        <div><i class="fas fa-user"></i> <a href="vendor-profile.html?id=${s.creatorId}" style="color: var(--primary);">${creatorName}</a></div>
+                        <div><i class="fas fa-cart-plus"></i> ${cartCount} dans paniers</div>
+                        <div><i class="fas fa-shopping-bag"></i> ${orderCount} vendus</div>
                         <div class="service-price">${s.price} FCFA</div>
                         <div class="service-actions">
-                            <button class="btn-buy" onclick="addToCart('${doc.id}')"><i class="fas fa-cart-plus"></i> Ajouter au panier</button>
+                            <button class="btn-buy" onclick="addToCart('${doc.id}')"><i class="fas fa-cart-plus"></i> Ajouter</button>
                             <button class="btn-info" onclick="contactCreator('${s.creatorId}')"><i class="fas fa-envelope"></i> Contacter</button>
                             <button class="btn-warning" onclick="addToFavorites('${doc.id}')"><i class="fas fa-heart"></i> Favori</button>
+                            <button class="btn-primary" onclick="followCreator('${s.creatorId}')"><i class="fas fa-user-plus"></i> Suivre</button>
                         </div>
                     </div>
                 `;
             }
             listDiv.innerHTML = html;
         }
+
+        window.showServiceDetails = async function(serviceId) {
+            const doc = await db.collection('services').doc(serviceId).get();
+            if (!doc.exists) return;
+            const s = doc.data();
+            const creatorDoc = await db.collection('users').doc(s.creatorId).get();
+            const creator = creatorDoc.data();
+
+            let faqHtml = '';
+            if (s.faq && Array.isArray(s.faq)) {
+                faqHtml = '<h4>Questions fréquentes</h4>';
+                s.faq.forEach((item, index) => {
+                    faqHtml += `
+                        <div style="margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px;">
+                            <strong>Q: ${item.question}</strong><br>
+                            <span>R: ${item.answer}</span>
+                        </div>
+                    `;
+                });
+            }
+
+            const modalContent = document.getElementById('serviceDetailContent');
+            modalContent.innerHTML = `
+                <h3>${s.title}</h3>
+                ${s.image ? `<img src="${s.image}" style="width:100%; max-height:300px; object-fit:cover; border-radius:5px; margin-bottom:15px;">` : ''}
+                <p><strong>Description:</strong> ${s.description}</p>
+                <p><strong>Prix:</strong> ${s.price} FCFA</p>
+                <p><strong>Catégorie:</strong> ${s.category}</p>
+                <p><strong>Délai de livraison:</strong> ${s.deliveryDays} jours</p>
+                <p><strong>Vendeur:</strong> <a href="vendor-profile.html?id=${s.creatorId}" style="color: var(--primary);">${creator.name || 'Inconnu'}</a></p>
+                ${faqHtml}
+                <div style="margin-top:20px; display:flex; gap:10px;">
+                    <button class="btn-buy" onclick="addToCart('${serviceId}')">Ajouter au panier</button>
+                    <button class="btn-warning" onclick="addToFavorites('${serviceId}')">Ajouter aux favoris</button>
+                </div>
+            `;
+            document.getElementById('serviceDetailModal').classList.add('active');
+        };
+
+        window.closeServiceModal = function() {
+            document.getElementById('serviceDetailModal').classList.remove('active');
+        };
 
         window.addToCart = async function(serviceId) {
             const existing = await db.collection('cart').where('userId', '==', currentUser.uid).where('serviceId', '==', serviceId).get();
@@ -150,6 +211,20 @@
                 addedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
             showToast('Ajouté aux favoris', 'success');
+        };
+
+        window.followCreator = async function(creatorId) {
+            const existing = await db.collection('follows').where('followerId', '==', currentUser.uid).where('followingId', '==', creatorId).get();
+            if (!existing.empty) {
+                showToast('Vous suivez déjà ce créateur', 'info');
+                return;
+            }
+            await db.collection('follows').add({
+                followerId: currentUser.uid,
+                followingId: creatorId,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            showToast('Vous suivez maintenant ce créateur', 'success');
         };
 
         window.contactCreator = function(creatorId) {

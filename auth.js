@@ -38,13 +38,25 @@ async function requireAuth() {
                         name: user.displayName || '',
                         email: user.email,
                         role: 'buyer',
+                        balance: 0, // Solde initial
                         settings: { publicProfile: true }
                     };
                     await db.collection('users').doc(user.uid).set(userData);
                 }
                 // Mettre à jour l'en-tête
-                document.getElementById('headerUserName').textContent = userData.name || user.email;
-                document.getElementById('headerAvatar').src = userData.photoURL || 'https://randomuser.me/api/portraits/lego/1.jpg';
+                const headerUserName = document.getElementById('headerUserName');
+                const headerAvatar = document.getElementById('headerAvatar');
+                const headerBalance = document.getElementById('headerBalance');
+                if (headerUserName) headerUserName.textContent = userData.name || user.email;
+                if (headerAvatar) headerAvatar.src = userData.photoURL || 'https://randomuser.me/api/portraits/lego/1.jpg';
+                if (headerBalance) {
+                    if (userData.role === 'buyer') {
+                        headerBalance.textContent = `Solde: ${userData.balance || 0} FCFA`;
+                        headerBalance.style.display = 'inline';
+                    } else {
+                        headerBalance.style.display = 'none';
+                    }
+                }
                 // Afficher bannière de vérification si nécessaire
                 const verificationBanner = document.getElementById('verificationBanner');
                 if (verificationBanner) {

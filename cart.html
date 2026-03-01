@@ -15,6 +15,7 @@
             <span>Afrik<span class="highlight">Digitalo</span></span>
         </div>
         <div class="header-user">
+            <span id="headerBalance" style="font-weight:600; margin-right:10px;"></span>
             <span id="headerUserName">Utilisateur</span>
             <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
             <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
@@ -122,7 +123,12 @@
                 </tr>`;
             });
             html += `</tbody></table><p><strong>Total : ${total} FCFA</strong></p>`;
-            html += `<button class="btn-success" onclick="checkout()">Passer la commande</button>`;
+            html += `<p><strong>Votre solde : ${userData.balance || 0} FCFA</strong></p>`;
+            if ((userData.balance || 0) >= total) {
+                html += `<button class="btn-success" onclick="checkout()">Passer la commande</button>`;
+            } else {
+                html += `<p style="color:red;">Solde insuffisant. Veuillez recharger votre compte.</p>`;
+            }
             html += '</div>';
             contentDiv.innerHTML = html;
         }
@@ -136,14 +142,16 @@
         window.checkout = async function() {
             const cartSnap = await db.collection('cart').where('userId', '==', currentUser.uid).get();
             if (cartSnap.empty) return;
-            const batch = db.batch();
+
+            let total = 0;
+            const orders = [];
             for (const doc of cartSnap.docs) {
                 const item = doc.data();
                 const serviceDoc = await db.collection('services').doc(item.serviceId).get();
                 if (!serviceDoc.exists) continue;
                 const service = serviceDoc.data();
-                const orderRef = db.collection('orders').doc();
-                batch.set(orderRef, {
+                total += service.price * (item.quantity || 1);
+                orders.push({
                     buyerId: currentUser.uid,
                     sellerId: service.creatorId,
                     serviceId: item.serviceId,
@@ -151,9 +159,32 @@
                     status: 'pending',
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                batch.delete(doc.ref);
             }
+
+            if ((userData.balance || 0) < total) {
+                showToast('Solde insuffisant', 'error');
+                return;
+            }
+
+            // Effectuer la transaction
+            const batch = db.batch();
+            // Déduire le solde de l'acheteur
+            const userRef = db.collection('users').doc(currentUser.uid);
+            batch.update(userRef, { balance: firebase.firestore.FieldValue.increment(-total) });
+
+            // Ajouter les commandes et supprimer le panier
+            for (const order of orders) {
+                const orderRef = db.collection('orders').doc();
+                batch.set(orderRef, order);
+            }
+            cartSnap.docs.forEach(doc => batch.delete(doc.ref));
+
             await batch.commit();
+
+            // Mettre à jour le solde local
+            userData.balance -= total;
+            document.getElementById('headerBalance').textContent = `Solde: ${userData.balance} FCFA`;
+
             showToast('Commande passée avec succès !', 'success');
             loadCart();
         };

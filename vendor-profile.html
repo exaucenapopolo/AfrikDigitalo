@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Profil du vendeur - AfrikDigitalo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="main-header">
+        <div class="logo">
+            <i class="fas fa-globe-africa"></i>
+            <span>Afrik<span class="highlight">Digitalo</span></span>
+        </div>
+        <div class="header-user">
+            <span id="headerBalance" style="font-weight:600; margin-right:10px;"></span>
+            <span id="headerUserName">Utilisateur</span>
+            <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
+            <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
+        </div>
+    </header>
+
+    <button class="mobile-menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+
+    <div class="dashboard">
+        <aside class="sidebar" id="sidebar">
+            <nav>
+                <ul id="sidebarNav"></ul>
+            </nav>
+        </aside>
+
+        <main class="main-content" id="mainContent">
+            <div id="verificationBanner" class="verification-banner" style="display: none;">
+                <p><i class="fas fa-exclamation-triangle"></i> Votre adresse email n'est pas encore vérifiée.</p>
+                <button id="resendVerificationBtn">Renvoyer l'email</button>
+            </div>
+
+            <div id="vendorProfileContent">Chargement...</div>
+        </main>
+    </div>
+
+    <nav class="mobile-nav" id="mobileNav">
+        <ul id="mobileNavList"></ul>
+    </nav>
+
+    <div class="modal" id="logoutModal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeLogoutModal()">&times;</span>
+            <h3>Confirmation</h3>
+            <p>Êtes-vous sûr de vouloir vous déconnecter ?</p>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-primary" id="confirmLogout">Oui</button>
+                <button class="btn btn-secondary" onclick="closeLogoutModal()">Non</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await requireAuth();
+            if (!userData) return;
+
+            // Récupérer l'ID du vendeur depuis l'URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const vendorId = urlParams.get('id');
+            if (!vendorId) {
+                window.location.href = 'explore.html';
+                return;
+            }
+
+            // Charger les informations du vendeur
+            const vendorDoc = await db.collection('users').doc(vendorId).get();
+            if (!vendorDoc.exists || vendorDoc.data().role !== 'creator') {
+                document.getElementById('vendorProfileContent').innerHTML = '<p>Vendeur introuvable.</p>';
+                return;
+            }
+            const vendor = vendorDoc.data();
+
+            // Compter les abonnés
+            const followersSnap = await db.collection('follows').where('followingId', '==', vendorId).get();
+            const followersCount = followersSnap.size;
+
+            // Récupérer les services du vendeur
+            const servicesSnap = await db.collection('services').where('creatorId', '==', vendorId).get();
+            const servicesCount = servicesSnap.size;
+
+            // Récupérer le nombre de commandes pour ses services
+            let ordersCount = 0;
+            for (const doc of servicesSnap.docs) {
+                const orderSnap = await db.collection('orders').where('serviceId', '==', doc.id).get();
+                ordersCount += orderSnap.size;
+            }
+
+            // Récupérer le nombre de favoris
+            let favCount = 0;
+            for (const doc of servicesSnap.docs) {
+                const favSnap = await db.collection('favorites').where('serviceId', '==', doc.id).get();
+                favCount += favSnap.size;
+            }
+
+            // Vérifier si l'utilisateur connecté suit déjà ce vendeur
+            let isFollowing = false;
+            if (currentUser.uid !== vendorId) {
+                const followCheck = await db.collection('follows')
+                    .where('followerId', '==', currentUser.uid)
+                    .where('followingId', '==', vendorId)
+                    .get();
+                isFollowing = !followCheck.empty;
+            }
+
+            // Afficher les infos du vendeur
+            let html = `
+                <div style="background: white; border-radius:10px; padding:30px; margin-bottom:30px;">
+                    <div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
+                        <img src="${vendor.photoURL || 'https://randomuser.me/api/portraits/lego/1.jpg'}" style="width:100px; height:100px; border-radius:50%; object-fit:cover; border:3px solid var(--primary);">
+                        <div>
+                            <h2>${vendor.name || 'Nom non renseigné'}</h2>
+                            <p><i class="fas fa-envelope"></i> ${vendor.email}</p>
+                            ${vendor.whatsapp ? `<p><i class="fab fa-whatsapp"></i> ${vendor.whatsapp}</p>` : ''}
+                            ${vendor.country ? `<p><i class="fas fa-map-marker-alt"></i> ${vendor.country}</p>` : ''}
+                            ${vendor.company ? `<p><i class="fas fa-building"></i> ${vendor.company}</p>` : ''}
+                            ${vendor.category ? `<p><i class="fas fa-tag"></i> ${vendor.category}</p>` : ''}
+                            <p><i class="fas fa-users"></i> ${followersCount} abonnés</p>
+                            <p><i class="fas fa-list"></i> ${servicesCount} services</p>
+                            <p><i class="fas fa-shopping-bag"></i> ${ordersCount} ventes</p>
+                            <p><i class="fas fa-heart"></i> ${favCount} favoris</p>
+                            ${vendor.description ? `<p><strong>Description:</strong> ${vendor.description}</p>` : ''}
+                        </div>
+                    </div>
+                    ${currentUser.uid !== vendorId ? `
+                        <div style="margin-top:20px;">
+                            <button class="btn ${isFollowing ? 'btn-danger' : 'btn-primary'}" onclick="${isFollowing ? 'unfollow' : 'follow'}Creator('${vendorId}')">
+                                <i class="fas fa-user-${isFollowing ? 'minus' : 'plus'}"></i> ${isFollowing ? 'Ne plus suivre' : 'Suivre'}
+                            </button>
+                            <button class="btn btn-info" onclick="contactCreator('${vendorId}')"><i class="fas fa-envelope"></i> Contacter</button>
+                        </div>
+                    ` : ''}
+                </div>
+                <h3>Ses services</h3>
+                <div id="vendorServices" class="services-grid">Chargement...</div>
+            `;
+            document.getElementById('vendorProfileContent').innerHTML = html;
+
+            // Afficher les services
+            let servicesHtml = '';
+            for (const doc of servicesSnap.docs) {
+                const s = doc.data();
+                servicesHtml += `
+                    <div class="service-card">
+                        ${s.image ? `<img src="${s.image}" style="width:100%; height:150px; object-fit:cover; border-radius:5px;">` : ''}
+                        <h3>${s.title}</h3>
+                        <p>${s.description.substring(0, 80)}...</p>
+                        <div class="service-price">${s.price} FCFA</div>
+                        <div class="service-actions">
+                            <button class="btn-buy" onclick="addToCart('${doc.id}')">Ajouter au panier</button>
+                            <button class="btn-warning" onclick="addToFavorites('${doc.id}')">Favori</button>
+                        </div>
+                    </div>
+                `;
+            }
+            document.getElementById('vendorServices').innerHTML = servicesHtml || '<p>Aucun service publié.</p>';
+
+            // Remplir la navigation
+            const sections = userData.role === 'creator' ? [
+                { id: 'dashboard', url: 'dashboard.html', icon: 'fas fa-home', label: 'Accueil' },
+                { id: 'services', url: 'services.html', icon: 'fas fa-list', label: 'Mes services' },
+                { id: 'orders', url: 'orders.html', icon: 'fas fa-shopping-bag', label: 'Commandes' },
+                { id: 'followers', url: 'followers.html', icon: 'fas fa-users', label: 'Abonnés' },
+                { id: 'profile', url: 'profile.html', icon: 'fas fa-user', label: 'Profil' },
+                { id: 'settings', url: 'settings.html', icon: 'fas fa-cog', label: 'Paramètres' }
+            ] : [
+                { id: 'dashboard', url: 'dashboard.html', icon: 'fas fa-home', label: 'Accueil' },
+                { id: 'explore', url: 'explore.html', icon: 'fas fa-search', label: 'Explorer' },
+                { id: 'cart', url: 'cart.html', icon: 'fas fa-shopping-cart', label: 'Panier' },
+                { id: 'orders', url: 'orders.html', icon: 'fas fa-history', label: 'Mes achats' },
+                { id: 'favorites', url: 'favorites.html', icon: 'fas fa-heart', label: 'Favoris' },
+                { id: 'profile', url: 'profile.html', icon: 'fas fa-user', label: 'Profil' },
+                { id: 'settings', url: 'settings.html', icon: 'fas fa-cog', label: 'Paramètres' }
+            ];
+            document.getElementById('sidebarNav').innerHTML = sections.map(s => `
+                <li><a href="${s.url}" class=""><i class="${s.icon}"></i> ${s.label}</a></li>
+            `).join('');
+            document.getElementById('mobileNavList').innerHTML = sections.map(s => `
+                <li><a href="${s.url}" class=""><i class="${s.icon}"></i> <span>${s.label}</span></a></li>
+            `).join('');
+        });
+
+        window.followCreator = async function(creatorId) {
+            await db.collection('follows').add({
+                followerId: currentUser.uid,
+                followingId: creatorId,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            showToast('Vous suivez maintenant ce créateur', 'success');
+            setTimeout(() => location.reload(), 1500);
+        };
+
+        window.unfollowCreator = async function(creatorId) {
+            const snap = await db.collection('follows')
+                .where('followerId', '==', currentUser.uid)
+                .where('followingId', '==', creatorId)
+                .get();
+            snap.forEach(doc => doc.ref.delete());
+            showToast('Vous ne suivez plus ce créateur', 'success');
+            setTimeout(() => location.reload(), 1500);
+        };
+
+        window.contactCreator = function(creatorId) {
+            showToast('Fonctionnalité de messagerie à venir', 'info');
+        };
+
+        window.addToCart = async function(serviceId) {
+            const existing = await db.collection('cart').where('userId', '==', currentUser.uid).where('serviceId', '==', serviceId).get();
+            if (!existing.empty) {
+                showToast('Déjà dans le panier', 'info');
+                return;
+            }
+            await db.collection('cart').add({
+                userId: currentUser.uid,
+                serviceId: serviceId,
+                quantity: 1,
+                addedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            showToast('Ajouté au panier', 'success');
+        };
+
+        window.addToFavorites = async function(serviceId) {
+            const existing = await db.collection('favorites').where('userId', '==', currentUser.uid).where('serviceId', '==', serviceId).get();
+            if (!existing.empty) {
+                showToast('Déjà dans les favoris', 'info');
+                return;
+            }
+            await db.collection('favorites').add({
+                userId: currentUser.uid,
+                serviceId: serviceId,
+                addedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            showToast('Ajouté aux favoris', 'success');
+        };
+    </script>
+</body>
+</html>

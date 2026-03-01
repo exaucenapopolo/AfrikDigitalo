@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Paramètres - AfrikDigitalo</title>
+    <title>Commandes - AfrikDigitalo</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="style.css">
@@ -37,44 +37,7 @@
                 <button id="resendVerificationBtn">Renvoyer l'email</button>
             </div>
 
-            <div class="settings-group">
-                <h3>Notifications</h3>
-                <div class="setting-item">
-                    <span>Notifications par email</span>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="notifEmail">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-                <div class="setting-item">
-                    <span>Notifications push</span>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="notifPush">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-            </div>
-            <div class="settings-group">
-                <h3>Confidentialité</h3>
-                <div class="setting-item">
-                    <span>Compte public</span>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="profilePublic">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-            </div>
-            <div class="settings-group">
-                <h3>Préférences</h3>
-                <div class="setting-item">
-                    <span>Langue</span>
-                    <select id="lang">
-                        <option value="fr">Français</option>
-                        <option value="en">Anglais</option>
-                    </select>
-                </div>
-            </div>
-            <button class="btn-save" onclick="saveSettings()">Enregistrer les paramètres</button>
+            <div id="ordersList">Chargement...</div>
         </main>
     </div>
 
@@ -105,7 +68,6 @@
             await requireAuth();
             if (!userData) return;
 
-            // Remplir la navigation
             const sections = userData.role === 'creator' ? [
                 { id: 'dashboard', url: 'dashboard.html', icon: 'fas fa-home', label: 'Accueil' },
                 { id: 'services', url: 'services.html', icon: 'fas fa-list', label: 'Mes services' },
@@ -123,31 +85,44 @@
                 { id: 'settings', url: 'settings.html', icon: 'fas fa-cog', label: 'Paramètres' }
             ];
             document.getElementById('sidebarNav').innerHTML = sections.map(s => `
-                <li><a href="${s.url}" class="${s.id === 'settings' ? 'active' : ''}"><i class="${s.icon}"></i> ${s.label}</a></li>
+                <li><a href="${s.url}" class="${s.id === 'orders' ? 'active' : ''}"><i class="${s.icon}"></i> ${s.label}</a></li>
             `).join('');
             document.getElementById('mobileNavList').innerHTML = sections.map(s => `
-                <li><a href="${s.url}" class="${s.id === 'settings' ? 'active' : ''}"><i class="${s.icon}"></i> <span>${s.label}</span></a></li>
+                <li><a href="${s.url}" class="${s.id === 'orders' ? 'active' : ''}"><i class="${s.icon}"></i> <span>${s.label}</span></a></li>
             `).join('');
 
-            // Charger les paramètres existants
-            if (userData.settings) {
-                document.getElementById('notifEmail').checked = userData.settings.emailNotifications || false;
-                document.getElementById('notifPush').checked = userData.settings.pushNotifications || false;
-                document.getElementById('profilePublic').checked = userData.settings.publicProfile !== false;
-                document.getElementById('lang').value = userData.settings.lang || 'fr';
-            }
+            await loadOrders();
         });
 
-        window.saveSettings = async function() {
-            const settings = {
-                emailNotifications: document.getElementById('notifEmail').checked,
-                pushNotifications: document.getElementById('notifPush').checked,
-                publicProfile: document.getElementById('profilePublic').checked,
-                lang: document.getElementById('lang').value
-            };
-            await db.collection('users').doc(currentUser.uid).update({ settings });
-            showToast('Paramètres enregistrés', 'success');
-        };
+        async function loadOrders() {
+            const listDiv = document.getElementById('ordersList');
+            let orders;
+            if (userData.role === 'creator') {
+                orders = await db.collection('orders').where('sellerId', '==', currentUser.uid).orderBy('createdAt', 'desc').get();
+            } else {
+                orders = await db.collection('orders').where('buyerId', '==', currentUser.uid).orderBy('createdAt', 'desc').get();
+            }
+            if (orders.empty) {
+                listDiv.innerHTML = '<p>Aucune commande.</p>';
+                return;
+            }
+            let html = '<div class="orders-table"><h2>Commandes</h2><table><thead><tr><th>ID</th><th>Service</th><th>Montant</th><th>Statut</th><th>Date</th></tr></thead><tbody>';
+            for (const doc of orders.docs) {
+                const o = doc.data();
+                const serviceDoc = await db.collection('services').doc(o.serviceId).get();
+                const serviceTitle = serviceDoc.exists ? serviceDoc.data().title : 'Service inconnu';
+                const date = o.createdAt ? new Date(o.createdAt.toDate()).toLocaleDateString() : 'N/A';
+                html += `<tr>
+                    <td>${doc.id.slice(0, 6)}...</td>
+                    <td>${serviceTitle}</td>
+                    <td>${o.amount} FCFA</td>
+                    <td><span class="badge ${o.status === 'completed' ? 'success' : o.status === 'pending' ? 'warning' : 'danger'}">${o.status}</span></td>
+                    <td>${date}</td>
+                </tr>`;
+            }
+            html += '</tbody></table></div>';
+            listDiv.innerHTML = html;
+        }
     </script>
 </body>
 </html>

@@ -15,6 +15,7 @@
             <span>Afrik<span class="highlight">Digitalo</span></span>
         </div>
         <div class="header-user">
+            <span id="headerBalance" style="font-weight:600; margin-right:10px;"></span>
             <span id="headerUserName">Utilisateur</span>
             <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
             <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
@@ -74,6 +75,10 @@
                 <div class="form-group">
                     <label>Image (URL) - optionnel</label>
                     <input type="url" id="serviceImage" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <label>Questions fréquentes (optionnel) - une par ligne, format "question:réponse"</label>
+                    <textarea id="serviceFaq" rows="4" placeholder="Ex: Délai de livraison ?:2 jours ouvrables&#10;Paiement ?:Accepte Orange Money"></textarea>
                 </div>
                 <button type="submit" class="btn-save">Enregistrer</button>
             </form>
@@ -156,21 +161,34 @@
                 return;
             }
             let html = '';
-            snapshot.forEach(doc => {
+            for (const doc of snapshot.docs) {
                 const s = doc.data();
+                // Compter les ajouts au panier
+                const cartSnap = await db.collection('cart').where('serviceId', '==', doc.id).get();
+                const cartCount = cartSnap.size;
+                // Compter les favoris
+                const favSnap = await db.collection('favorites').where('serviceId', '==', doc.id).get();
+                const favCount = favSnap.size;
+                // Compter les commandes
+                const orderSnap = await db.collection('orders').where('serviceId', '==', doc.id).get();
+                const orderCount = orderSnap.size;
+
                 html += `
                     <div class="service-card">
                         ${s.image ? `<img src="${s.image}" alt="${s.title}" style="width:100%; height:150px; object-fit:cover; border-radius:5px; margin-bottom:10px;">` : ''}
                         <h3>${s.title}</h3>
                         <p>${s.description.substring(0, 80)}...</p>
                         <div class="service-price">${s.price} FCFA</div>
+                        <div><i class="fas fa-cart-plus"></i> ${cartCount} dans paniers</div>
+                        <div><i class="fas fa-heart"></i> ${favCount} favoris</div>
+                        <div><i class="fas fa-shopping-bag"></i> ${orderCount} vendus</div>
                         <div class="service-actions">
-                            <button class="btn-edit" onclick="editService('${doc.id}', '${s.title.replace(/'/g, "\\'")}', '${s.description.replace(/'/g, "\\'")}', ${s.price}, '${s.category}', ${s.deliveryDays}, '${s.image || ''}')"><i class="fas fa-edit"></i> Modifier</button>
+                            <button class="btn-edit" onclick="editService('${doc.id}', '${s.title.replace(/'/g, "\\'")}', '${s.description.replace(/'/g, "\\'")}', ${s.price}, '${s.category}', ${s.deliveryDays}, '${s.image || ''}', '${JSON.stringify(s.faq || []).replace(/'/g, "\\'")}')"><i class="fas fa-edit"></i> Modifier</button>
                             <button class="btn-delete" onclick="deleteService('${doc.id}')"><i class="fas fa-trash"></i> Supprimer</button>
                         </div>
                     </div>
                 `;
-            });
+            }
             listDiv.innerHTML = html;
         }
 
@@ -185,7 +203,7 @@
             document.getElementById('serviceModal').classList.remove('active');
         };
 
-        window.editService = function(id, title, desc, price, category, delivery, image) {
+        window.editService = function(id, title, desc, price, category, delivery, image, faqJson) {
             editingServiceId = id;
             document.getElementById('modalTitle').textContent = 'Modifier le service';
             document.getElementById('serviceTitle').value = title;
@@ -194,6 +212,17 @@
             document.getElementById('serviceCategory').value = category;
             document.getElementById('serviceDelivery').value = delivery;
             document.getElementById('serviceImage').value = image || '';
+            // Convertir faq en texte
+            let faqText = '';
+            if (faqJson) {
+                try {
+                    const faq = JSON.parse(faqJson);
+                    faq.forEach(item => {
+                        faqText += `${item.question}:${item.answer}\n`;
+                    });
+                } catch (e) {}
+            }
+            document.getElementById('serviceFaq').value = faqText;
             document.getElementById('serviceModal').classList.add('active');
         };
 
@@ -213,6 +242,19 @@
             const category = document.getElementById('serviceCategory').value;
             const delivery = parseInt(document.getElementById('serviceDelivery').value);
             const image = document.getElementById('serviceImage').value;
+            const faqRaw = document.getElementById('serviceFaq').value;
+
+            // Traiter la FAQ
+            let faq = [];
+            if (faqRaw) {
+                const lines = faqRaw.split('\n');
+                lines.forEach(line => {
+                    if (line.includes(':')) {
+                        const [question, answer] = line.split(':');
+                        faq.push({ question: question.trim(), answer: answer.trim() });
+                    }
+                });
+            }
 
             if (!title || !desc || !price || !category) {
                 showToast('Veuillez remplir tous les champs obligatoires', 'error');
@@ -227,6 +269,7 @@
                 category,
                 deliveryDays: delivery,
                 image: image || null,
+                faq: faq,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 

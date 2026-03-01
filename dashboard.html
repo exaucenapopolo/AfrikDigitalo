@@ -15,6 +15,7 @@
             <span>Afrik<span class="highlight">Digitalo</span></span>
         </div>
         <div class="header-user">
+            <span id="headerBalance" style="font-weight:600; margin-right:10px;"></span>
             <span id="headerUserName">Utilisateur</span>
             <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
             <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
@@ -112,8 +113,26 @@
                 const servicesSnap = await db.collection('services').where('creatorId', '==', currentUser.uid).get();
                 const ordersSnap = await db.collection('orders').where('sellerId', '==', currentUser.uid).get();
                 const followersSnap = await db.collection('follows').where('followingId', '==', currentUser.uid).get();
+
+                // Calcul des revenus
                 let revenue = 0;
                 ordersSnap.forEach(doc => revenue += doc.data().amount || 0);
+
+                // Compter les ajouts au panier pour chaque service
+                let totalCartAdds = 0;
+                for (const doc of servicesSnap.docs) {
+                    const serviceId = doc.id;
+                    const cartSnap = await db.collection('cart').where('serviceId', '==', serviceId).get();
+                    totalCartAdds += cartSnap.size;
+                }
+
+                // Compter les favoris
+                let totalFavs = 0;
+                for (const doc of servicesSnap.docs) {
+                    const serviceId = doc.id;
+                    const favSnap = await db.collection('favorites').where('serviceId', '==', serviceId).get();
+                    totalFavs += favSnap.size;
+                }
 
                 let html = `
                     <div class="stats-grid">
@@ -132,6 +151,14 @@
                         <div class="stat-card">
                             <div class="stat-icon"><i class="fas fa-list"></i></div>
                             <div class="stat-details"><h3>Services</h3><p>${servicesSnap.size}</p></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-cart-plus"></i></div>
+                            <div class="stat-details"><h3>Ajouts panier</h3><p>${totalCartAdds}</p></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-heart"></i></div>
+                            <div class="stat-details"><h3>Favoris</h3><p>${totalFavs}</p></div>
                         </div>
                     </div>
                     <div class="orders-table"><h2>Dernières commandes</h2><div id="recentOrdersList">Chargement...</div></div>
@@ -175,6 +202,10 @@
                         <div class="stat-card">
                             <div class="stat-icon"><i class="fas fa-heart"></i></div>
                             <div class="stat-details"><h3>Favoris</h3><p>${favSnap.size}</p></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-wallet"></i></div>
+                            <div class="stat-details"><h3>Solde</h3><p>${userData.balance || 0} FCFA</p></div>
                         </div>
                     </div>
                     <div class="orders-table"><h2>Derniers achats</h2><div id="recentPurchasesList">Chargement...</div></div>
