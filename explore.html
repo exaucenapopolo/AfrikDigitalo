@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Explorer - AfrikDigitalo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="main-header">
+        <div class="logo">
+            <i class="fas fa-globe-africa"></i>
+            <span>Afrik<span class="highlight">Digitalo</span></span>
+        </div>
+        <div class="header-user">
+            <span id="headerUserName">Utilisateur</span>
+            <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
+            <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
+        </div>
+    </header>
+
+    <button class="mobile-menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+
+    <div class="dashboard">
+        <aside class="sidebar" id="sidebar">
+            <nav>
+                <ul id="sidebarNav"></ul>
+            </nav>
+        </aside>
+
+        <main class="main-content" id="mainContent">
+            <div id="verificationBanner" class="verification-banner" style="display: none;">
+                <p><i class="fas fa-exclamation-triangle"></i> Votre adresse email n'est pas encore vérifiée.</p>
+                <button id="resendVerificationBtn">Renvoyer l'email</button>
+            </div>
+
+            <h2>Explorez les services</h2>
+            <div id="exploreList" class="services-grid">Chargement...</div>
+        </main>
+    </div>
+
+    <nav class="mobile-nav" id="mobileNav">
+        <ul id="mobileNavList"></ul>
+    </nav>
+
+    <div class="modal" id="logoutModal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeLogoutModal()">&times;</span>
+            <h3>Confirmation</h3>
+            <p>Êtes-vous sûr de vouloir vous déconnecter ?</p>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-primary" id="confirmLogout">Oui</button>
+                <button class="btn btn-secondary" onclick="closeLogoutModal()">Non</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await requireAuth();
+            if (!userData) return;
+
+            // Vérifier que l'utilisateur est bien un acheteur
+            if (userData.role !== 'buyer') {
+                window.location.href = 'dashboard.html';
+                return;
+            }
+
+            const sections = [
+                { id: 'dashboard', url: 'dashboard.html', icon: 'fas fa-home', label: 'Accueil' },
+                { id: 'explore', url: 'explore.html', icon: 'fas fa-search', label: 'Explorer' },
+                { id: 'cart', url: 'cart.html', icon: 'fas fa-shopping-cart', label: 'Panier' },
+                { id: 'orders', url: 'orders.html', icon: 'fas fa-history', label: 'Mes achats' },
+                { id: 'favorites', url: 'favorites.html', icon: 'fas fa-heart', label: 'Favoris' },
+                { id: 'profile', url: 'profile.html', icon: 'fas fa-user', label: 'Profil' },
+                { id: 'settings', url: 'settings.html', icon: 'fas fa-cog', label: 'Paramètres' }
+            ];
+            document.getElementById('sidebarNav').innerHTML = sections.map(s => `
+                <li><a href="${s.url}" class="${s.id === 'explore' ? 'active' : ''}"><i class="${s.icon}"></i> ${s.label}</a></li>
+            `).join('');
+            document.getElementById('mobileNavList').innerHTML = sections.map(s => `
+                <li><a href="${s.url}" class="${s.id === 'explore' ? 'active' : ''}"><i class="${s.icon}"></i> <span>${s.label}</span></a></li>
+            `).join('');
+
+            await loadExplore();
+        });
+
+        async function loadExplore() {
+            const listDiv = document.getElementById('exploreList');
+            const snapshot = await db.collection('services').get();
+            if (snapshot.empty) {
+                listDiv.innerHTML = '<p>Aucun service disponible pour le moment.</p>';
+                return;
+            }
+            let html = '';
+            for (const doc of snapshot.docs) {
+                const s = doc.data();
+                const creatorDoc = await db.collection('users').doc(s.creatorId).get();
+                const creatorName = creatorDoc.exists ? creatorDoc.data().name : 'Inconnu';
+                html += `
+                    <div class="service-card">
+                        ${s.image ? `<img src="${s.image}" alt="${s.title}" style="width:100%; height:150px; object-fit:cover; border-radius:5px; margin-bottom:10px;">` : ''}
+                        <h3>${s.title}</h3>
+                        <p>${s.description.substring(0, 80)}...</p>
+                        <div><i class="fas fa-user"></i> ${creatorName}</div>
+                        <div class="service-price">${s.price} FCFA</div>
+                        <div class="service-actions">
+                            <button class="btn-buy" onclick="addToCart('${doc.id}')"><i class="fas fa-cart-plus"></i> Ajouter au panier</button>
+                            <button class="btn-info" onclick="contactCreator('${s.creatorId}')"><i class="fas fa-envelope"></i> Contacter</button>
+                            <button class="btn-warning" onclick="addToFavorites('${doc.id}')"><i class="fas fa-heart"></i> Favori</button>
+                        </div>
+                    </div>
+                `;
+            }
+            listDiv.innerHTML = html;
+        }
+
+        window.addToCart = async function(serviceId) {
+            const existing = await db.collection('cart').where('userId', '==', currentUser.uid).where('serviceId', '==', serviceId).get();
+            if (!existing.empty) {
+                showToast('Déjà dans le panier', 'info');
+                return;
+            }
+            await db.collection('cart').add({
+                userId: currentUser.uid,
+                serviceId: serviceId,
+                quantity: 1,
+                addedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            showToast('Ajouté au panier', 'success');
+        };
+
+        window.addToFavorites = async function(serviceId) {
+            const existing = await db.collection('favorites').where('userId', '==', currentUser.uid).where('serviceId', '==', serviceId).get();
+            if (!existing.empty) {
+                showToast('Déjà dans les favoris', 'info');
+                return;
+            }
+            await db.collection('favorites').add({
+                userId: currentUser.uid,
+                serviceId: serviceId,
+                addedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            showToast('Ajouté aux favoris', 'success');
+        };
+
+        window.contactCreator = function(creatorId) {
+            showToast('Fonctionnalité de messagerie à venir', 'info');
+        };
+    </script>
+</body>
+</html>

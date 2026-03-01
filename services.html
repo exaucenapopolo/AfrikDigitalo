@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Mes services - AfrikDigitalo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="main-header">
+        <div class="logo">
+            <i class="fas fa-globe-africa"></i>
+            <span>Afrik<span class="highlight">Digitalo</span></span>
+        </div>
+        <div class="header-user">
+            <span id="headerUserName">Utilisateur</span>
+            <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
+            <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
+        </div>
+    </header>
+
+    <button class="mobile-menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+
+    <div class="dashboard">
+        <aside class="sidebar" id="sidebar">
+            <nav>
+                <ul id="sidebarNav"></ul>
+            </nav>
+        </aside>
+
+        <main class="main-content" id="mainContent">
+            <div id="verificationBanner" class="verification-banner" style="display: none;">
+                <p><i class="fas fa-exclamation-triangle"></i> Votre adresse email n'est pas encore vérifiée.</p>
+                <button id="resendVerificationBtn">Renvoyer l'email</button>
+            </div>
+
+            <button class="btn-add" onclick="openModal()"><i class="fas fa-plus"></i> Ajouter un service</button>
+            <div id="servicesList" class="services-grid">Chargement...</div>
+        </main>
+    </div>
+
+    <nav class="mobile-nav" id="mobileNav">
+        <ul id="mobileNavList"></ul>
+    </nav>
+
+    <!-- Modal pour ajouter/modifier service -->
+    <div class="modal" id="serviceModal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <h3 id="modalTitle">Ajouter un service</h3>
+            <form id="serviceForm">
+                <div class="form-group">
+                    <label>Titre *</label>
+                    <input type="text" id="serviceTitle" required>
+                </div>
+                <div class="form-group">
+                    <label>Description *</label>
+                    <textarea id="serviceDesc" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Prix (FCFA) *</label>
+                    <input type="number" id="servicePrice" required>
+                </div>
+                <div class="form-group">
+                    <label>Catégorie *</label>
+                    <select id="serviceCategory" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Délai de livraison (jours) *</label>
+                    <input type="number" id="serviceDelivery" value="3" required>
+                </div>
+                <div class="form-group">
+                    <label>Image (URL) - optionnel</label>
+                    <input type="url" id="serviceImage" placeholder="https://...">
+                </div>
+                <button type="submit" class="btn-save">Enregistrer</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="logoutModal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeLogoutModal()">&times;</span>
+            <h3>Confirmation</h3>
+            <p>Êtes-vous sûr de vouloir vous déconnecter ?</p>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-primary" id="confirmLogout">Oui</button>
+                <button class="btn btn-secondary" onclick="closeLogoutModal()">Non</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="auth.js"></script>
+    <script>
+        // Script spécifique aux services
+        let editingServiceId = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await requireAuth();
+            if (!userData) return;
+
+            // Vérifier que l'utilisateur est bien un créateur
+            if (userData.role !== 'creator') {
+                window.location.href = 'dashboard.html';
+                return;
+            }
+
+            // Remplir les catégories dans le modal
+            const catSelect = document.getElementById('serviceCategory');
+            const categories = [
+                "Développement web", "Développement mobile", "Design graphique", "Illustration", "Logo design",
+                "UI/UX design", "Motion design", "Montage vidéo", "Animation 2D/3D", "Photographie",
+                "Rédaction web", "Copywriting", "Traduction", "Relecture", "Community management",
+                "Marketing digital", "SEO", "Publicité en ligne", "Email marketing", "Influence",
+                "Musique", "Composition", "Mixage audio", "Podcast", "Voix off",
+                "Conseil", "Coaching", "Formation en ligne", "E-learning", "Création de contenu",
+                "Gestion de projet", "Assistanat virtuel", "Saisie de données", "Transcription", "Recherche",
+                "Architecture", "Ingénierie", "Comptabilité", "Juridique", "Traductions techniques",
+                "Jeux vidéo", "Réalité virtuelle", "Intelligence artificielle", "Blockchain", "Cybersécurité",
+                "Réseaux", "Support technique", "Administration système", "Cloud computing", "Data science"
+            ];
+            catSelect.innerHTML = '<option value="">Sélectionnez</option>' + categories.map(c => `<option value="${c}">${c}</option>`).join('');
+
+            // Remplir la navigation
+            const sections = [
+                { id: 'dashboard', url: 'dashboard.html', icon: 'fas fa-home', label: 'Accueil' },
+                { id: 'services', url: 'services.html', icon: 'fas fa-list', label: 'Mes services' },
+                { id: 'orders', url: 'orders.html', icon: 'fas fa-shopping-bag', label: 'Commandes' },
+                { id: 'followers', url: 'followers.html', icon: 'fas fa-users', label: 'Abonnés' },
+                { id: 'profile', url: 'profile.html', icon: 'fas fa-user', label: 'Profil' },
+                { id: 'settings', url: 'settings.html', icon: 'fas fa-cog', label: 'Paramètres' }
+            ];
+            document.getElementById('sidebarNav').innerHTML = sections.map(s => `
+                <li><a href="${s.url}" class="${s.id === 'services' ? 'active' : ''}"><i class="${s.icon}"></i> ${s.label}</a></li>
+            `).join('');
+            document.getElementById('mobileNavList').innerHTML = sections.map(s => `
+                <li><a href="${s.url}" class="${s.id === 'services' ? 'active' : ''}"><i class="${s.icon}"></i> <span>${s.label}</span></a></li>
+            `).join('');
+
+            // Charger les services
+            await loadServices();
+        });
+
+        async function loadServices() {
+            const listDiv = document.getElementById('servicesList');
+            const snapshot = await db.collection('services').where('creatorId', '==', currentUser.uid).get();
+            if (snapshot.empty) {
+                listDiv.innerHTML = '<p>Aucun service pour le moment.</p>';
+                return;
+            }
+            let html = '';
+            snapshot.forEach(doc => {
+                const s = doc.data();
+                html += `
+                    <div class="service-card">
+                        ${s.image ? `<img src="${s.image}" alt="${s.title}" style="width:100%; height:150px; object-fit:cover; border-radius:5px; margin-bottom:10px;">` : ''}
+                        <h3>${s.title}</h3>
+                        <p>${s.description.substring(0, 80)}...</p>
+                        <div class="service-price">${s.price} FCFA</div>
+                        <div class="service-actions">
+                            <button class="btn-edit" onclick="editService('${doc.id}', '${s.title.replace(/'/g, "\\'")}', '${s.description.replace(/'/g, "\\'")}', ${s.price}, '${s.category}', ${s.deliveryDays}, '${s.image || ''}')"><i class="fas fa-edit"></i> Modifier</button>
+                            <button class="btn-delete" onclick="deleteService('${doc.id}')"><i class="fas fa-trash"></i> Supprimer</button>
+                        </div>
+                    </div>
+                `;
+            });
+            listDiv.innerHTML = html;
+        }
+
+        window.openModal = function() {
+            editingServiceId = null;
+            document.getElementById('modalTitle').textContent = 'Ajouter un service';
+            document.getElementById('serviceForm').reset();
+            document.getElementById('serviceModal').classList.add('active');
+        };
+
+        window.closeModal = function() {
+            document.getElementById('serviceModal').classList.remove('active');
+        };
+
+        window.editService = function(id, title, desc, price, category, delivery, image) {
+            editingServiceId = id;
+            document.getElementById('modalTitle').textContent = 'Modifier le service';
+            document.getElementById('serviceTitle').value = title;
+            document.getElementById('serviceDesc').value = desc;
+            document.getElementById('servicePrice').value = price;
+            document.getElementById('serviceCategory').value = category;
+            document.getElementById('serviceDelivery').value = delivery;
+            document.getElementById('serviceImage').value = image || '';
+            document.getElementById('serviceModal').classList.add('active');
+        };
+
+        window.deleteService = async function(id) {
+            if (confirm('Supprimer ce service ?')) {
+                await db.collection('services').doc(id).delete();
+                showToast('Service supprimé', 'success');
+                loadServices();
+            }
+        };
+
+        document.getElementById('serviceForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = document.getElementById('serviceTitle').value;
+            const desc = document.getElementById('serviceDesc').value;
+            const price = parseFloat(document.getElementById('servicePrice').value);
+            const category = document.getElementById('serviceCategory').value;
+            const delivery = parseInt(document.getElementById('serviceDelivery').value);
+            const image = document.getElementById('serviceImage').value;
+
+            if (!title || !desc || !price || !category) {
+                showToast('Veuillez remplir tous les champs obligatoires', 'error');
+                return;
+            }
+
+            const serviceData = {
+                creatorId: currentUser.uid,
+                title,
+                description: desc,
+                price,
+                category,
+                deliveryDays: delivery,
+                image: image || null,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            try {
+                if (editingServiceId) {
+                    await db.collection('services').doc(editingServiceId).update(serviceData);
+                    showToast('Service modifié', 'success');
+                } else {
+                    serviceData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                    await db.collection('services').add(serviceData);
+                    showToast('Service ajouté', 'success');
+                }
+                closeModal();
+                loadServices();
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        });
+    </script>
+</body>
+</html>

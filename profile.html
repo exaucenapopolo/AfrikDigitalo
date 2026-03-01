@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Profil - AfrikDigitalo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="main-header">
+        <div class="logo">
+            <i class="fas fa-globe-africa"></i>
+            <span>Afrik<span class="highlight">Digitalo</span></span>
+        </div>
+        <div class="header-user">
+            <span id="headerUserName">Utilisateur</span>
+            <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
+            <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
+        </div>
+    </header>
+
+    <button class="mobile-menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+
+    <div class="dashboard">
+        <aside class="sidebar" id="sidebar">
+            <nav>
+                <ul id="sidebarNav"></ul>
+            </nav>
+        </aside>
+
+        <main class="main-content" id="mainContent">
+            <div id="verificationBanner" class="verification-banner" style="display: none;">
+                <p><i class="fas fa-exclamation-triangle"></i> Votre adresse email n'est pas encore vérifiée.</p>
+                <button id="resendVerificationBtn">Renvoyer l'email</button>
+            </div>
+
+            <div class="profile-form" id="profileFormContainer">
+                <h2>Mon profil</h2>
+                <form id="profileForm">
+                    <div class="form-group">
+                        <label>Nom complet</label>
+                        <input type="text" id="profileName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="profileEmail" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Numéro WhatsApp</label>
+                        <input type="tel" id="profileWhatsapp" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Pays</label>
+                        <select id="profileCountry" required>
+                            <option value="">Sélectionnez</option>
+                        </select>
+                    </div>
+                    <div id="creatorFields" style="display: none;">
+                        <div class="form-group">
+                            <label>Nom de l'entreprise</label>
+                            <input type="text" id="profileCompany">
+                        </div>
+                        <div class="form-group">
+                            <label>Catégorie principale</label>
+                            <select id="profileCategory">
+                                <option value="">Sélectionnez</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea id="profileDesc" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-save">Mettre à jour</button>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <nav class="mobile-nav" id="mobileNav">
+        <ul id="mobileNavList"></ul>
+    </nav>
+
+    <div class="modal" id="logoutModal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeLogoutModal()">&times;</span>
+            <h3>Confirmation</h3>
+            <p>Êtes-vous sûr de vouloir vous déconnecter ?</p>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-primary" id="confirmLogout">Oui</button>
+                <button class="btn btn-secondary" onclick="closeLogoutModal()">Non</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await requireAuth();
+            if (!userData) return;
+
+            // Remplir les listes déroulantes
+            const pays = ["Sénégal", "Côte d'Ivoire", "Cameroun", "Maroc", "Tunisie", "Algérie", "Burkina Faso", "Mali", "Nigéria", "Afrique du Sud", "Kenya", "Ghana", "Congo", "RDC", "Bénin", "Togo", "Niger", "Mauritanie", "Guinée", "Éthiopie", "Ouganda", "Rwanda", "Tanzanie", "Madagascar"];
+            const countrySelect = document.getElementById('profileCountry');
+            countrySelect.innerHTML = '<option value="">Sélectionnez</option>' + pays.map(p => `<option value="${p}">${p}</option>`).join('');
+
+            const categories = [
+                "Développement web", "Développement mobile", "Design graphique", "Illustration", "Logo design",
+                "UI/UX design", "Motion design", "Montage vidéo", "Animation 2D/3D", "Photographie",
+                "Rédaction web", "Copywriting", "Traduction", "Relecture", "Community management",
+                "Marketing digital", "SEO", "Publicité en ligne", "Email marketing", "Influence",
+                "Musique", "Composition", "Mixage audio", "Podcast", "Voix off",
+                "Conseil", "Coaching", "Formation en ligne", "E-learning", "Création de contenu",
+                "Gestion de projet", "Assistanat virtuel", "Saisie de données", "Transcription", "Recherche",
+                "Architecture", "Ingénierie", "Comptabilité", "Juridique", "Traductions techniques",
+                "Jeux vidéo", "Réalité virtuelle", "Intelligence artificielle", "Blockchain", "Cybersécurité",
+                "Réseaux", "Support technique", "Administration système", "Cloud computing", "Data science"
+            ];
+            const catSelect = document.getElementById('profileCategory');
+            catSelect.innerHTML = '<option value="">Sélectionnez</option>' + categories.map(c => `<option value="${c}">${c}</option>`).join('');
+
+            // Afficher les champs créateur si nécessaire
+            if (userData.role === 'creator') {
+                document.getElementById('creatorFields').style.display = 'block';
+            }
+
+            // Remplir les valeurs existantes
+            document.getElementById('profileName').value = userData.name || '';
+            document.getElementById('profileEmail').value = currentUser.email;
+            document.getElementById('profileWhatsapp').value = userData.whatsapp || '';
+            document.getElementById('profileCountry').value = userData.country || '';
+            if (userData.role === 'creator') {
+                document.getElementById('profileCompany').value = userData.company || '';
+                document.getElementById('profileCategory').value = userData.category || '';
+                document.getElementById('profileDesc').value = userData.description || '';
+            }
+
+            // Remplir la navigation
+            const sections = userData.role === 'creator' ? [
+                { id: 'dashboard', url: 'dashboard.html', icon: 'fas fa-home', label: 'Accueil' },
+                { id: 'services', url: 'services.html', icon: 'fas fa-list', label: 'Mes services' },
+                { id: 'orders', url: 'orders.html', icon: 'fas fa-shopping-bag', label: 'Commandes' },
+                { id: 'followers', url: 'followers.html', icon: 'fas fa-users', label: 'Abonnés' },
+                { id: 'profile', url: 'profile.html', icon: 'fas fa-user', label: 'Profil' },
+                { id: 'settings', url: 'settings.html', icon: 'fas fa-cog', label: 'Paramètres' }
+            ] : [
+                { id: 'dashboard', url: 'dashboard.html', icon: 'fas fa-home', label: 'Accueil' },
+                { id: 'explore', url: 'explore.html', icon: 'fas fa-search', label: 'Explorer' },
+                { id: 'cart', url: 'cart.html', icon: 'fas fa-shopping-cart', label: 'Panier' },
+                { id: 'orders', url: 'orders.html', icon: 'fas fa-history', label: 'Mes achats' },
+                { id: 'favorites', url: 'favorites.html', icon: 'fas fa-heart', label: 'Favoris' },
+                { id: 'profile', url: 'profile.html', icon: 'fas fa-user', label: 'Profil' },
+                { id: 'settings', url: 'settings.html', icon: 'fas fa-cog', label: 'Paramètres' }
+            ];
+            document.getElementById('sidebarNav').innerHTML = sections.map(s => `
+                <li><a href="${s.url}" class="${s.id === 'profile' ? 'active' : ''}"><i class="${s.icon}"></i> ${s.label}</a></li>
+            `).join('');
+            document.getElementById('mobileNavList').innerHTML = sections.map(s => `
+                <li><a href="${s.url}" class="${s.id === 'profile' ? 'active' : ''}"><i class="${s.icon}"></i> <span>${s.label}</span></a></li>
+            `).join('');
+
+            // Gestion de la soumission du formulaire
+            document.getElementById('profileForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const updates = {
+                    name: document.getElementById('profileName').value,
+                    whatsapp: document.getElementById('profileWhatsapp').value,
+                    country: document.getElementById('profileCountry').value
+                };
+                if (userData.role === 'creator') {
+                    updates.company = document.getElementById('profileCompany').value;
+                    updates.category = document.getElementById('profileCategory').value;
+                    updates.description = document.getElementById('profileDesc').value;
+                }
+                try {
+                    await db.collection('users').doc(currentUser.uid).update(updates);
+                    showToast('Profil mis à jour', 'success');
+                    userData = { ...userData, ...updates };
+                    document.getElementById('headerUserName').textContent = userData.name;
+                } catch (error) {
+                    showToast(error.message, 'error');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
