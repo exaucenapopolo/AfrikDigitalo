@@ -39,6 +39,13 @@
 
             <div class="profile-form" id="profileFormContainer">
                 <h2>Mon profil</h2>
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <img id="profileAvatarPreview" src="" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary);">
+                    <div style="margin-top: 10px;">
+                        <input type="file" id="avatarUpload" accept="image/*" style="display: none;">
+                        <button class="btn btn-primary" onclick="document.getElementById('avatarUpload').click()">Changer photo</button>
+                    </div>
+                </div>
                 <form id="profileForm">
                     <div class="form-group">
                         <label>Nom complet</label>
@@ -142,6 +149,9 @@
                 document.getElementById('profileCategory').value = userData.category || '';
                 document.getElementById('profileDesc').value = userData.description || '';
             }
+            // Afficher la photo de profil
+            const avatarPreview = document.getElementById('profileAvatarPreview');
+            avatarPreview.src = userData.photoURL || 'https://randomuser.me/api/portraits/lego/1.jpg';
 
             // Remplir la navigation
             const sections = userData.role === 'creator' ? [
@@ -166,6 +176,34 @@
             document.getElementById('mobileNavList').innerHTML = sections.map(s => `
                 <li><a href="${s.url}" class="${s.id === 'profile' ? 'active' : ''}"><i class="${s.icon}"></i> <span>${s.label}</span></a></li>
             `).join('');
+
+            // Upload de la photo de profil
+            document.getElementById('avatarUpload').addEventListener('change', async function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const formData = new FormData();
+                formData.append("file", file);
+                formData.append("upload_preset", "afrikdigitalo_upload");
+
+                try {
+                    const res = await fetch("https://api.cloudinary.com/v1_1/do83voiqy/image/upload", {
+                        method: "POST",
+                        body: formData
+                    });
+                    const data = await res.json();
+                    if (data.secure_url) {
+                        // Mettre à jour dans Firestore
+                        await db.collection('users').doc(currentUser.uid).update({ photoURL: data.secure_url });
+                        userData.photoURL = data.secure_url;
+                        document.getElementById('profileAvatarPreview').src = data.secure_url;
+                        document.getElementById('headerAvatar').src = data.secure_url;
+                        showToast('Photo de profil mise à jour', 'success');
+                    }
+                } catch (error) {
+                    showToast("Erreur d'upload", 'error');
+                }
+            });
 
             // Gestion de la soumission du formulaire
             document.getElementById('profileForm').addEventListener('submit', async (e) => {

@@ -68,7 +68,6 @@
             await requireAuth();
             if (!userData) return;
 
-            // Récupérer l'ID du vendeur depuis l'URL
             const urlParams = new URLSearchParams(window.location.search);
             const vendorId = urlParams.get('id');
             if (!vendorId) {
@@ -76,7 +75,6 @@
                 return;
             }
 
-            // Charger les informations du vendeur
             const vendorDoc = await db.collection('users').doc(vendorId).get();
             if (!vendorDoc.exists || vendorDoc.data().role !== 'creator') {
                 document.getElementById('vendorProfileContent').innerHTML = '<p>Vendeur introuvable.</p>';
@@ -84,29 +82,24 @@
             }
             const vendor = vendorDoc.data();
 
-            // Compter les abonnés
             const followersSnap = await db.collection('follows').where('followingId', '==', vendorId).get();
             const followersCount = followersSnap.size;
 
-            // Récupérer les services du vendeur
             const servicesSnap = await db.collection('services').where('creatorId', '==', vendorId).get();
             const servicesCount = servicesSnap.size;
 
-            // Récupérer le nombre de commandes pour ses services
             let ordersCount = 0;
             for (const doc of servicesSnap.docs) {
                 const orderSnap = await db.collection('orders').where('serviceId', '==', doc.id).get();
                 ordersCount += orderSnap.size;
             }
 
-            // Récupérer le nombre de favoris
             let favCount = 0;
             for (const doc of servicesSnap.docs) {
                 const favSnap = await db.collection('favorites').where('serviceId', '==', doc.id).get();
                 favCount += favSnap.size;
             }
 
-            // Vérifier si l'utilisateur connecté suit déjà ce vendeur
             let isFollowing = false;
             if (currentUser.uid !== vendorId) {
                 const followCheck = await db.collection('follows')
@@ -116,7 +109,6 @@
                 isFollowing = !followCheck.empty;
             }
 
-            // Afficher les infos du vendeur
             let html = `
                 <div style="background: white; border-radius:10px; padding:30px; margin-bottom:30px;">
                     <div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
@@ -137,7 +129,7 @@
                     </div>
                     ${currentUser.uid !== vendorId ? `
                         <div style="margin-top:20px;">
-                            <button class="btn ${isFollowing ? 'btn-danger' : 'btn-primary'}" onclick="${isFollowing ? 'unfollow' : 'follow'}Creator('${vendorId}')">
+                            <button class="btn ${isFollowing ? 'btn-danger' : 'btn-primary'}" onclick="${isFollowing ? 'unfollowCreator' : 'followCreator'}('${vendorId}')">
                                 <i class="fas fa-user-${isFollowing ? 'minus' : 'plus'}"></i> ${isFollowing ? 'Ne plus suivre' : 'Suivre'}
                             </button>
                             <button class="btn btn-info" onclick="contactCreator('${vendorId}')"><i class="fas fa-envelope"></i> Contacter</button>
@@ -149,13 +141,13 @@
             `;
             document.getElementById('vendorProfileContent').innerHTML = html;
 
-            // Afficher les services
             let servicesHtml = '';
             for (const doc of servicesSnap.docs) {
                 const s = doc.data();
+                const imageHtml = s.images && s.images.length > 0 ? `<img src="${s.images[0]}" style="width:100%; height:150px; object-fit:cover; border-radius:5px; margin-bottom:10px;">` : '';
                 servicesHtml += `
                     <div class="service-card">
-                        ${s.image ? `<img src="${s.image}" style="width:100%; height:150px; object-fit:cover; border-radius:5px;">` : ''}
+                        ${imageHtml}
                         <h3>${s.title}</h3>
                         <p>${s.description.substring(0, 80)}...</p>
                         <div class="service-price">${s.price} FCFA</div>
@@ -168,7 +160,6 @@
             }
             document.getElementById('vendorServices').innerHTML = servicesHtml || '<p>Aucun service publié.</p>';
 
-            // Remplir la navigation
             const sections = userData.role === 'creator' ? [
                 { id: 'dashboard', url: 'dashboard.html', icon: 'fas fa-home', label: 'Accueil' },
                 { id: 'services', url: 'services.html', icon: 'fas fa-list', label: 'Mes services' },

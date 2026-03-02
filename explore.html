@@ -15,6 +15,7 @@
             <span>Afrik<span class="highlight">Digitalo</span></span>
         </div>
         <div class="header-user">
+            <span id="headerBalance" style="font-weight:600; margin-right:10px;"></span>
             <span id="headerUserName">Utilisateur</span>
             <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
             <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
@@ -112,32 +113,27 @@
                 const s = doc.data();
                 const creatorDoc = await db.collection('users').doc(s.creatorId).get();
                 const creator = creatorDoc.data();
-                const creatorName = creator?.name || 'Inconnu';
-                const creatorAvatar = creator?.photoURL || 'https://randomuser.me/api/portraits/lego/1.jpg';
-                // Récupérer le nombre de fois que ce service a été ajouté au panier
+                const creatorName = creator ? creator.name : 'Inconnu';
+                const creatorAvatar = creator ? (creator.photoURL || 'https://randomuser.me/api/portraits/lego/1.jpg') : 'https://randomuser.me/api/portraits/lego/1.jpg';
                 const cartCountSnap = await db.collection('cart').where('serviceId', '==', doc.id).get();
                 const cartCount = cartCountSnap.size;
-                // Récupérer le nombre de commandes pour ce service
                 const orderCountSnap = await db.collection('orders').where('serviceId', '==', doc.id).get();
                 const orderCount = orderCountSnap.size;
-                // Récupérer le nombre de favoris
-                const favCountSnap = await db.collection('favorites').where('serviceId', '==', doc.id).get();
-                const favCount = favCountSnap.size;
+
+                // Afficher la première image si elle existe
+                const imageHtml = s.images && s.images.length > 0 ? `<img src="${s.images[0]}" alt="${s.title}" style="width:100%; height:150px; object-fit:cover; border-radius:5px; margin-bottom:10px;">` : '';
 
                 html += `
                     <div class="service-card">
-                        ${s.image ? `<img src="${s.image}" alt="${s.title}" style="width:100%; height:150px; object-fit:cover; border-radius:5px; margin-bottom:10px;">` : ''}
+                        ${imageHtml}
                         <h3>${s.title}</h3>
                         <p>${s.description.substring(0, 80)}... <button class="btn-link" onclick="showServiceDetails('${doc.id}')">Voir plus</button></p>
-                        <div style="display: flex; align-items: center; gap: 10px; margin: 10px 0;">
+                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
                             <img src="${creatorAvatar}" style="width:30px; height:30px; border-radius:50%; object-fit:cover;">
                             <a href="vendor-profile.html?id=${s.creatorId}" style="color: var(--primary);">${creatorName}</a>
                         </div>
-                        <div style="display: flex; gap: 15px; font-size:0.9rem; color:#555;">
-                            <span><i class="fas fa-cart-plus"></i> ${cartCount}</span>
-                            <span><i class="fas fa-shopping-bag"></i> ${orderCount}</span>
-                            <span><i class="fas fa-heart"></i> ${favCount}</span>
-                        </div>
+                        <div><i class="fas fa-cart-plus"></i> ${cartCount} dans paniers</div>
+                        <div><i class="fas fa-shopping-bag"></i> ${orderCount} vendus</div>
                         <div class="service-price">${s.price} FCFA</div>
                         <div class="service-actions">
                             <button class="btn-buy" onclick="addToCart('${doc.id}')"><i class="fas fa-cart-plus"></i> Ajouter</button>
@@ -158,8 +154,18 @@
             const creatorDoc = await db.collection('users').doc(s.creatorId).get();
             const creator = creatorDoc.data();
 
+            // Afficher les images
+            let imagesHtml = '';
+            if (s.images && s.images.length) {
+                imagesHtml = '<div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px;">';
+                s.images.forEach(url => {
+                    imagesHtml += `<img src="${url}" style="width:200px; height:150px; object-fit:cover; border-radius:5px;">`;
+                });
+                imagesHtml += '</div>';
+            }
+
             let faqHtml = '';
-            if (s.faq && Array.isArray(s.faq) && s.faq.length > 0) {
+            if (s.faq && s.faq.length) {
                 faqHtml = '<h4>Questions fréquentes</h4>';
                 s.faq.forEach((item, index) => {
                     faqHtml += `
@@ -174,12 +180,12 @@
             const modalContent = document.getElementById('serviceDetailContent');
             modalContent.innerHTML = `
                 <h3>${s.title}</h3>
-                ${s.image ? `<img src="${s.image}" style="width:100%; max-height:300px; object-fit:cover; border-radius:5px; margin-bottom:15px;">` : ''}
+                ${imagesHtml}
                 <p><strong>Description:</strong> ${s.description}</p>
                 <p><strong>Prix:</strong> ${s.price} FCFA</p>
                 <p><strong>Catégorie:</strong> ${s.category}</p>
                 <p><strong>Délai de livraison:</strong> ${s.deliveryDays} jours</p>
-                <p><strong>Vendeur:</strong> <a href="vendor-profile.html?id=${s.creatorId}" style="color: var(--primary);">${creator?.name || 'Inconnu'}</a></p>
+                <p><strong>Vendeur:</strong> <a href="vendor-profile.html?id=${s.creatorId}" style="color: var(--primary);">${creator ? creator.name : 'Inconnu'}</a></p>
                 ${faqHtml}
                 <div style="margin-top:20px; display:flex; gap:10px;">
                     <button class="btn-buy" onclick="addToCart('${serviceId}')">Ajouter au panier</button>
@@ -223,10 +229,6 @@
         };
 
         window.followCreator = async function(creatorId) {
-            if (creatorId === currentUser.uid) {
-                showToast('Vous ne pouvez pas vous suivre vous-même', 'info');
-                return;
-            }
             const existing = await db.collection('follows').where('followerId', '==', currentUser.uid).where('followingId', '==', creatorId).get();
             if (!existing.empty) {
                 showToast('Vous suivez déjà ce créateur', 'info');

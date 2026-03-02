@@ -15,6 +15,7 @@
             <span>Afrik<span class="highlight">Digitalo</span></span>
         </div>
         <div class="header-user">
+            <span id="headerBalance" style="font-weight:600; margin-right:10px;"></span>
             <span id="headerUserName">Utilisateur</span>
             <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
             <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
@@ -45,7 +46,7 @@
         <ul id="mobileNavList"></ul>
     </nav>
 
-    <!-- Modal pour ajouter/modifier service avec FAQ structurée -->
+    <!-- Modal pour ajouter/modifier service -->
     <div class="modal" id="serviceModal">
         <div class="modal-content">
             <span class="modal-close" onclick="closeModal()">&times;</span>
@@ -72,45 +73,28 @@
                     <input type="number" id="serviceDelivery" value="3" required>
                 </div>
                 <div class="form-group">
-                    <label>Image (URL) - optionnel</label>
-                    <input type="url" id="serviceImage" placeholder="https://...">
+                    <label>Images (jusqu'à 2) - optionnel</label>
+                    <input type="file" id="serviceImage1" accept="image/*">
+                    <input type="file" id="serviceImage2" accept="image/*" style="margin-top:5px;">
+                    <div id="imagePreviewContainer" style="display: flex; gap:10px; margin-top:10px;"></div>
                 </div>
-
-                <h4>Questions fréquentes (max 3)</h4>
-                <div id="faqContainer">
-                    <!-- Trois paires question/réponse -->
-                    <div class="faq-item">
-                        <div class="form-group">
-                            <label>Question 1</label>
-                            <input type="text" id="faqQ1" placeholder="Ex: Délai de livraison ?">
+                <div class="form-group">
+                    <label>Questions fréquentes (max 3)</label>
+                    <div id="faqContainer">
+                        <div class="faq-item" style="margin-bottom:10px;">
+                            <input type="text" id="faqQuestion1" placeholder="Question 1" style="width:48%; margin-right:2%;">
+                            <input type="text" id="faqAnswer1" placeholder="Réponse 1" style="width:48%;">
                         </div>
-                        <div class="form-group">
-                            <label>Réponse 1</label>
-                            <input type="text" id="faqA1" placeholder="Ex: 2 jours ouvrables">
+                        <div class="faq-item" style="margin-bottom:10px;">
+                            <input type="text" id="faqQuestion2" placeholder="Question 2" style="width:48%; margin-right:2%;">
+                            <input type="text" id="faqAnswer2" placeholder="Réponse 2" style="width:48%;">
                         </div>
-                    </div>
-                    <div class="faq-item">
-                        <div class="form-group">
-                            <label>Question 2</label>
-                            <input type="text" id="faqQ2" placeholder="Ex: Paiement ?">
-                        </div>
-                        <div class="form-group">
-                            <label>Réponse 2</label>
-                            <input type="text" id="faqA2" placeholder="Ex: Accepte Orange Money">
-                        </div>
-                    </div>
-                    <div class="faq-item">
-                        <div class="form-group">
-                            <label>Question 3</label>
-                            <input type="text" id="faqQ3" placeholder="Ex: Révisions ?">
-                        </div>
-                        <div class="form-group">
-                            <label>Réponse 3</label>
-                            <input type="text" id="faqA3" placeholder="Ex: 2 révisions gratuites">
+                        <div class="faq-item" style="margin-bottom:10px;">
+                            <input type="text" id="faqQuestion3" placeholder="Question 3" style="width:48%; margin-right:2%;">
+                            <input type="text" id="faqAnswer3" placeholder="Réponse 3" style="width:48%;">
                         </div>
                     </div>
                 </div>
-
                 <button type="submit" class="btn-save">Enregistrer</button>
             </form>
         </div>
@@ -136,6 +120,7 @@
     <script src="auth.js"></script>
     <script>
         let editingServiceId = null;
+        let uploadedImages = []; // pour stocker les URLs pendant l'upload
 
         document.addEventListener('DOMContentLoaded', async () => {
             await requireAuth();
@@ -162,7 +147,7 @@
             ];
             catSelect.innerHTML = '<option value="">Sélectionnez</option>' + categories.map(c => `<option value="${c}">${c}</option>`).join('');
 
-            // Navigation
+            // Remplir la navigation
             const sections = [
                 { id: 'dashboard', url: 'dashboard.html', icon: 'fas fa-home', label: 'Accueil' },
                 { id: 'services', url: 'services.html', icon: 'fas fa-list', label: 'Mes services' },
@@ -191,19 +176,19 @@
             let html = '';
             for (const doc of snapshot.docs) {
                 const s = doc.data();
-                // Compter les ajouts au panier
                 const cartSnap = await db.collection('cart').where('serviceId', '==', doc.id).get();
                 const cartCount = cartSnap.size;
-                // Compter les favoris
                 const favSnap = await db.collection('favorites').where('serviceId', '==', doc.id).get();
                 const favCount = favSnap.size;
-                // Compter les commandes
                 const orderSnap = await db.collection('orders').where('serviceId', '==', doc.id).get();
                 const orderCount = orderSnap.size;
 
+                // Afficher la première image si elle existe
+                const imageHtml = s.images && s.images.length > 0 ? `<img src="${s.images[0]}" style="width:100%; height:150px; object-fit:cover; border-radius:5px; margin-bottom:10px;">` : '';
+
                 html += `
                     <div class="service-card">
-                        ${s.image ? `<img src="${s.image}" alt="${s.title}" style="width:100%; height:150px; object-fit:cover; border-radius:5px; margin-bottom:10px;">` : ''}
+                        ${imageHtml}
                         <h3>${s.title}</h3>
                         <p>${s.description.substring(0, 80)}...</p>
                         <div class="service-price">${s.price} FCFA</div>
@@ -211,7 +196,7 @@
                         <div><i class="fas fa-heart"></i> ${favCount} favoris</div>
                         <div><i class="fas fa-shopping-bag"></i> ${orderCount} vendus</div>
                         <div class="service-actions">
-                            <button class="btn-edit" onclick="editService('${doc.id}', '${s.title.replace(/'/g, "\\'")}', '${s.description.replace(/'/g, "\\'")}', ${s.price}, '${s.category}', ${s.deliveryDays}, '${s.image || ''}', ${JSON.stringify(s.faq || [])})"><i class="fas fa-edit"></i> Modifier</button>
+                            <button class="btn-edit" onclick="editService('${doc.id}')"><i class="fas fa-edit"></i> Modifier</button>
                             <button class="btn-delete" onclick="deleteService('${doc.id}')"><i class="fas fa-trash"></i> Supprimer</button>
                         </div>
                     </div>
@@ -224,6 +209,14 @@
             editingServiceId = null;
             document.getElementById('modalTitle').textContent = 'Ajouter un service';
             document.getElementById('serviceForm').reset();
+            document.getElementById('imagePreviewContainer').innerHTML = '';
+            uploadedImages = [];
+            document.getElementById('faqQuestion1').value = '';
+            document.getElementById('faqAnswer1').value = '';
+            document.getElementById('faqQuestion2').value = '';
+            document.getElementById('faqAnswer2').value = '';
+            document.getElementById('faqQuestion3').value = '';
+            document.getElementById('faqAnswer3').value = '';
             document.getElementById('serviceModal').classList.add('active');
         };
 
@@ -231,21 +224,34 @@
             document.getElementById('serviceModal').classList.remove('active');
         };
 
-        window.editService = function(id, title, desc, price, category, delivery, image, faq) {
+        window.editService = async function(id) {
+            const doc = await db.collection('services').doc(id).get();
+            if (!doc.exists) return;
+            const s = doc.data();
             editingServiceId = id;
             document.getElementById('modalTitle').textContent = 'Modifier le service';
-            document.getElementById('serviceTitle').value = title;
-            document.getElementById('serviceDesc').value = desc;
-            document.getElementById('servicePrice').value = price;
-            document.getElementById('serviceCategory').value = category;
-            document.getElementById('serviceDelivery').value = delivery;
-            document.getElementById('serviceImage').value = image || '';
-            // Remplir les FAQ
-            if (faq && Array.isArray(faq)) {
-                for (let i = 0; i < 3; i++) {
-                    document.getElementById(`faqQ${i+1}`).value = faq[i]?.question || '';
-                    document.getElementById(`faqA${i+1}`).value = faq[i]?.answer || '';
-                }
+            document.getElementById('serviceTitle').value = s.title;
+            document.getElementById('serviceDesc').value = s.description;
+            document.getElementById('servicePrice').value = s.price;
+            document.getElementById('serviceCategory').value = s.category;
+            document.getElementById('serviceDelivery').value = s.deliveryDays;
+            // Afficher les images existantes
+            if (s.images && s.images.length) {
+                uploadedImages = s.images;
+                let previewHtml = '';
+                s.images.forEach((url, index) => {
+                    previewHtml += `<img src="${url}" style="width:100px; height:100px; object-fit:cover; border-radius:5px;">`;
+                });
+                document.getElementById('imagePreviewContainer').innerHTML = previewHtml;
+            }
+            // Remplir la FAQ
+            if (s.faq && s.faq.length) {
+                s.faq.forEach((item, i) => {
+                    if (i < 3) {
+                        document.getElementById(`faqQuestion${i+1}`).value = item.question || '';
+                        document.getElementById(`faqAnswer${i+1}`).value = item.answer || '';
+                    }
+                });
             }
             document.getElementById('serviceModal').classList.add('active');
         };
@@ -258,6 +264,54 @@
             }
         };
 
+        // Gestion de l'upload des images
+        async function uploadImage(file) {
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("upload_preset", "afrikdigitalo_upload");
+
+            const res = await fetch("https://api.cloudinary.com/v1_1/do83voiqy/image/upload", {
+                method: "POST",
+                body: formData
+            });
+            const data = await res.json();
+            return data.secure_url;
+        }
+
+        document.getElementById('serviceImage1').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            try {
+                const url = await uploadImage(file);
+                uploadedImages.push(url);
+                updateImagePreview();
+                showToast('Image 1 uploadée', 'success');
+            } catch (error) {
+                showToast('Erreur upload image 1', 'error');
+            }
+        });
+
+        document.getElementById('serviceImage2').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            try {
+                const url = await uploadImage(file);
+                uploadedImages.push(url);
+                updateImagePreview();
+                showToast('Image 2 uploadée', 'success');
+            } catch (error) {
+                showToast('Erreur upload image 2', 'error');
+            }
+        });
+
+        function updateImagePreview() {
+            let html = '';
+            uploadedImages.forEach(url => {
+                html += `<img src="${url}" style="width:100px; height:100px; object-fit:cover; border-radius:5px; margin-right:5px;">`;
+            });
+            document.getElementById('imagePreviewContainer').innerHTML = html;
+        }
+
         document.getElementById('serviceForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const title = document.getElementById('serviceTitle').value;
@@ -265,15 +319,14 @@
             const price = parseFloat(document.getElementById('servicePrice').value);
             const category = document.getElementById('serviceCategory').value;
             const delivery = parseInt(document.getElementById('serviceDelivery').value);
-            const image = document.getElementById('serviceImage').value;
 
-            // Construire la FAQ à partir des 3 paires
+            // Récupérer la FAQ
             const faq = [];
             for (let i = 1; i <= 3; i++) {
-                const question = document.getElementById(`faqQ${i}`).value.trim();
-                const answer = document.getElementById(`faqA${i}`).value.trim();
-                if (question && answer) {
-                    faq.push({ question, answer });
+                const q = document.getElementById(`faqQuestion${i}`).value;
+                const a = document.getElementById(`faqAnswer${i}`).value;
+                if (q && a) {
+                    faq.push({ question: q, answer: a });
                 }
             }
 
@@ -289,7 +342,7 @@
                 price,
                 category,
                 deliveryDays: delivery,
-                image: image || null,
+                images: uploadedImages, // tableau d'URLs
                 faq: faq,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
