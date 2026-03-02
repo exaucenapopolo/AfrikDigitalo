@@ -15,7 +15,6 @@
             <span>Afrik<span class="highlight">Digitalo</span></span>
         </div>
         <div class="header-user">
-            <span id="headerBalance" style="font-weight:600; margin-right:10px;"></span>
             <span id="headerUserName">Utilisateur</span>
             <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
             <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
@@ -74,6 +73,25 @@
                     </select>
                 </div>
             </div>
+
+            <!-- Options spécifiques au créateur -->
+            <div id="creatorSettings" style="display: none;">
+                <div class="settings-group">
+                    <h3>Paramètres vendeur</h3>
+                    <div class="setting-item">
+                        <span>Commission personnalisée (actuellement 10%)</span>
+                        <span>Non modifiable</span>
+                    </div>
+                    <div class="setting-item">
+                        <span>Mode vacances</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="vacationMode">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
             <button class="btn-save" onclick="saveSettings()">Enregistrer les paramètres</button>
         </main>
     </div>
@@ -129,6 +147,14 @@
                 <li><a href="${s.url}" class="${s.id === 'settings' ? 'active' : ''}"><i class="${s.icon}"></i> <span>${s.label}</span></a></li>
             `).join('');
 
+            // Afficher les options créateur si nécessaire
+            if (userData.role === 'creator') {
+                document.getElementById('creatorSettings').style.display = 'block';
+                if (userData.settings) {
+                    document.getElementById('vacationMode').checked = userData.settings.vacationMode || false;
+                }
+            }
+
             // Charger les paramètres existants
             if (userData.settings) {
                 document.getElementById('notifEmail').checked = userData.settings.emailNotifications || false;
@@ -145,6 +171,9 @@
                 publicProfile: document.getElementById('profilePublic').checked,
                 lang: document.getElementById('lang').value
             };
+            if (userData.role === 'creator') {
+                settings.vacationMode = document.getElementById('vacationMode').checked;
+            }
             await db.collection('users').doc(currentUser.uid).update({ settings });
             showToast('Paramètres enregistrés', 'success');
         };

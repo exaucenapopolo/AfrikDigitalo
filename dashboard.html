@@ -15,7 +15,6 @@
             <span>Afrik<span class="highlight">Digitalo</span></span>
         </div>
         <div class="header-user">
-            <span id="headerBalance" style="font-weight:600; margin-right:10px;"></span>
             <span id="headerUserName">Utilisateur</span>
             <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
             <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
@@ -66,7 +65,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="auth.js"></script>
     <script>
-        // Script spécifique à la page d'accueil
         document.addEventListener('DOMContentLoaded', async () => {
             await requireAuth();
             if (!userData) return;
@@ -114,9 +112,9 @@
                 const ordersSnap = await db.collection('orders').where('sellerId', '==', currentUser.uid).get();
                 const followersSnap = await db.collection('follows').where('followingId', '==', currentUser.uid).get();
 
-                // Calcul des revenus
+                // Calcul des revenus (après commission de 10% pour l'entreprise)
                 let revenue = 0;
-                ordersSnap.forEach(doc => revenue += doc.data().amount || 0);
+                ordersSnap.forEach(doc => revenue += doc.data().amount * 0.9); // 90% pour le vendeur
 
                 // Compter les ajouts au panier pour chaque service
                 let totalCartAdds = 0;
@@ -138,7 +136,7 @@
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
-                            <div class="stat-details"><h3>Revenus</h3><p>${revenue} FCFA</p></div>
+                            <div class="stat-details"><h3>Revenus (après commission)</h3><p>${revenue} FCFA</p></div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon"><i class="fas fa-shopping-cart"></i></div>
@@ -189,7 +187,13 @@
                 ordersSnap.forEach(doc => spent += doc.data().amount || 0);
                 const favSnap = await db.collection('favorites').where('userId', '==', currentUser.uid).get();
 
+                // Section solde bien visible
                 let html = `
+                    <div style="background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border-radius: 10px; padding: 30px; margin-bottom: 30px; text-align: center;">
+                        <h2 style="margin-bottom: 10px;">Votre solde</h2>
+                        <p style="font-size: 3rem; font-weight: 700;">${userData.balance || 0} FCFA</p>
+                        <p style="margin-top: 10px;">Utilisez votre solde pour acheter des services</p>
+                    </div>
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-icon"><i class="fas fa-shopping-bag"></i></div>
@@ -202,10 +206,6 @@
                         <div class="stat-card">
                             <div class="stat-icon"><i class="fas fa-heart"></i></div>
                             <div class="stat-details"><h3>Favoris</h3><p>${favSnap.size}</p></div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon"><i class="fas fa-wallet"></i></div>
-                            <div class="stat-details"><h3>Solde</h3><p>${userData.balance || 0} FCFA</p></div>
                         </div>
                     </div>
                     <div class="orders-table"><h2>Derniers achats</h2><div id="recentPurchasesList">Chargement...</div></div>

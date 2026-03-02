@@ -15,7 +15,6 @@
             <span>Afrik<span class="highlight">Digitalo</span></span>
         </div>
         <div class="header-user">
-            <span id="headerBalance" style="font-weight:600; margin-right:10px;"></span>
             <span id="headerUserName">Utilisateur</span>
             <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
             <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
@@ -46,7 +45,7 @@
         <ul id="mobileNavList"></ul>
     </nav>
 
-    <!-- Modal pour ajouter/modifier service -->
+    <!-- Modal pour ajouter/modifier service avec FAQ structurée -->
     <div class="modal" id="serviceModal">
         <div class="modal-content">
             <span class="modal-close" onclick="closeModal()">&times;</span>
@@ -76,10 +75,42 @@
                     <label>Image (URL) - optionnel</label>
                     <input type="url" id="serviceImage" placeholder="https://...">
                 </div>
-                <div class="form-group">
-                    <label>Questions fréquentes (optionnel) - une par ligne, format "question:réponse"</label>
-                    <textarea id="serviceFaq" rows="4" placeholder="Ex: Délai de livraison ?:2 jours ouvrables&#10;Paiement ?:Accepte Orange Money"></textarea>
+
+                <h4>Questions fréquentes (max 3)</h4>
+                <div id="faqContainer">
+                    <!-- Trois paires question/réponse -->
+                    <div class="faq-item">
+                        <div class="form-group">
+                            <label>Question 1</label>
+                            <input type="text" id="faqQ1" placeholder="Ex: Délai de livraison ?">
+                        </div>
+                        <div class="form-group">
+                            <label>Réponse 1</label>
+                            <input type="text" id="faqA1" placeholder="Ex: 2 jours ouvrables">
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="form-group">
+                            <label>Question 2</label>
+                            <input type="text" id="faqQ2" placeholder="Ex: Paiement ?">
+                        </div>
+                        <div class="form-group">
+                            <label>Réponse 2</label>
+                            <input type="text" id="faqA2" placeholder="Ex: Accepte Orange Money">
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="form-group">
+                            <label>Question 3</label>
+                            <input type="text" id="faqQ3" placeholder="Ex: Révisions ?">
+                        </div>
+                        <div class="form-group">
+                            <label>Réponse 3</label>
+                            <input type="text" id="faqA3" placeholder="Ex: 2 révisions gratuites">
+                        </div>
+                    </div>
                 </div>
+
                 <button type="submit" class="btn-save">Enregistrer</button>
             </form>
         </div>
@@ -104,20 +135,18 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="auth.js"></script>
     <script>
-        // Script spécifique aux services
         let editingServiceId = null;
 
         document.addEventListener('DOMContentLoaded', async () => {
             await requireAuth();
             if (!userData) return;
 
-            // Vérifier que l'utilisateur est bien un créateur
             if (userData.role !== 'creator') {
                 window.location.href = 'dashboard.html';
                 return;
             }
 
-            // Remplir les catégories dans le modal
+            // Remplir les catégories
             const catSelect = document.getElementById('serviceCategory');
             const categories = [
                 "Développement web", "Développement mobile", "Design graphique", "Illustration", "Logo design",
@@ -133,7 +162,7 @@
             ];
             catSelect.innerHTML = '<option value="">Sélectionnez</option>' + categories.map(c => `<option value="${c}">${c}</option>`).join('');
 
-            // Remplir la navigation
+            // Navigation
             const sections = [
                 { id: 'dashboard', url: 'dashboard.html', icon: 'fas fa-home', label: 'Accueil' },
                 { id: 'services', url: 'services.html', icon: 'fas fa-list', label: 'Mes services' },
@@ -149,7 +178,6 @@
                 <li><a href="${s.url}" class="${s.id === 'services' ? 'active' : ''}"><i class="${s.icon}"></i> <span>${s.label}</span></a></li>
             `).join('');
 
-            // Charger les services
             await loadServices();
         });
 
@@ -183,7 +211,7 @@
                         <div><i class="fas fa-heart"></i> ${favCount} favoris</div>
                         <div><i class="fas fa-shopping-bag"></i> ${orderCount} vendus</div>
                         <div class="service-actions">
-                            <button class="btn-edit" onclick="editService('${doc.id}', '${s.title.replace(/'/g, "\\'")}', '${s.description.replace(/'/g, "\\'")}', ${s.price}, '${s.category}', ${s.deliveryDays}, '${s.image || ''}', '${JSON.stringify(s.faq || []).replace(/'/g, "\\'")}')"><i class="fas fa-edit"></i> Modifier</button>
+                            <button class="btn-edit" onclick="editService('${doc.id}', '${s.title.replace(/'/g, "\\'")}', '${s.description.replace(/'/g, "\\'")}', ${s.price}, '${s.category}', ${s.deliveryDays}, '${s.image || ''}', ${JSON.stringify(s.faq || [])})"><i class="fas fa-edit"></i> Modifier</button>
                             <button class="btn-delete" onclick="deleteService('${doc.id}')"><i class="fas fa-trash"></i> Supprimer</button>
                         </div>
                     </div>
@@ -203,7 +231,7 @@
             document.getElementById('serviceModal').classList.remove('active');
         };
 
-        window.editService = function(id, title, desc, price, category, delivery, image, faqJson) {
+        window.editService = function(id, title, desc, price, category, delivery, image, faq) {
             editingServiceId = id;
             document.getElementById('modalTitle').textContent = 'Modifier le service';
             document.getElementById('serviceTitle').value = title;
@@ -212,17 +240,13 @@
             document.getElementById('serviceCategory').value = category;
             document.getElementById('serviceDelivery').value = delivery;
             document.getElementById('serviceImage').value = image || '';
-            // Convertir faq en texte
-            let faqText = '';
-            if (faqJson) {
-                try {
-                    const faq = JSON.parse(faqJson);
-                    faq.forEach(item => {
-                        faqText += `${item.question}:${item.answer}\n`;
-                    });
-                } catch (e) {}
+            // Remplir les FAQ
+            if (faq && Array.isArray(faq)) {
+                for (let i = 0; i < 3; i++) {
+                    document.getElementById(`faqQ${i+1}`).value = faq[i]?.question || '';
+                    document.getElementById(`faqA${i+1}`).value = faq[i]?.answer || '';
+                }
             }
-            document.getElementById('serviceFaq').value = faqText;
             document.getElementById('serviceModal').classList.add('active');
         };
 
@@ -242,18 +266,15 @@
             const category = document.getElementById('serviceCategory').value;
             const delivery = parseInt(document.getElementById('serviceDelivery').value);
             const image = document.getElementById('serviceImage').value;
-            const faqRaw = document.getElementById('serviceFaq').value;
 
-            // Traiter la FAQ
-            let faq = [];
-            if (faqRaw) {
-                const lines = faqRaw.split('\n');
-                lines.forEach(line => {
-                    if (line.includes(':')) {
-                        const [question, answer] = line.split(':');
-                        faq.push({ question: question.trim(), answer: answer.trim() });
-                    }
-                });
+            // Construire la FAQ à partir des 3 paires
+            const faq = [];
+            for (let i = 1; i <= 3; i++) {
+                const question = document.getElementById(`faqQ${i}`).value.trim();
+                const answer = document.getElementById(`faqA${i}`).value.trim();
+                if (question && answer) {
+                    faq.push({ question, answer });
+                }
             }
 
             if (!title || !desc || !price || !category) {

@@ -15,7 +15,6 @@
             <span>Afrik<span class="highlight">Digitalo</span></span>
         </div>
         <div class="header-user">
-            <span id="headerBalance" style="font-weight:600; margin-right:10px;"></span>
             <span id="headerUserName">Utilisateur</span>
             <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
             <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
@@ -98,15 +97,31 @@
                 listDiv.innerHTML = '<p>Vous n\'avez pas encore d\'abonnés.</p>';
                 return;
             }
-            let html = '<div class="orders-table"><h2>Mes abonnés</h2><ul>';
+            let html = '<div class="orders-table"><h2>Mes abonnés</h2><table><thead><tr><th>Nom</th><th>Email</th><th>Achats</th><th>Favoris</th></tr></thead><tbody>';
             for (const doc of followersSnap.docs) {
                 const f = doc.data();
                 const userDoc = await db.collection('users').doc(f.followerId).get();
                 if (userDoc.exists) {
-                    html += `<li>${userDoc.data().name}</li>`;
+                    const user = userDoc.data();
+                    // Compter les achats de cet abonné
+                    const ordersSnap = await db.collection('orders').where('buyerId', '==', f.followerId).where('sellerId', '==', currentUser.uid).get();
+                    const ordersCount = ordersSnap.size;
+                    // Compter les favoris de cet abonné pour les services du vendeur
+                    const servicesSnap = await db.collection('services').where('creatorId', '==', currentUser.uid).get();
+                    let favCount = 0;
+                    for (const s of servicesSnap.docs) {
+                        const favSnap = await db.collection('favorites').where('userId', '==', f.followerId).where('serviceId', '==', s.id).get();
+                        favCount += favSnap.size;
+                    }
+                    html += `<tr>
+                        <td>${user.name || 'Inconnu'}</td>
+                        <td>${user.email}</td>
+                        <td>${ordersCount}</td>
+                        <td>${favCount}</td>
+                    </tr>`;
                 }
             }
-            html += '</ul></div>';
+            html += '</tbody></table></div>';
             listDiv.innerHTML = html;
         }
     </script>

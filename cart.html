@@ -15,7 +15,6 @@
             <span>Afrik<span class="highlight">Digitalo</span></span>
         </div>
         <div class="header-user">
-            <span id="headerBalance" style="font-weight:600; margin-right:10px;"></span>
             <span id="headerUserName">Utilisateur</span>
             <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
             <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
@@ -107,10 +106,14 @@
                 const serviceDoc = await db.collection('services').doc(item.serviceId).get();
                 if (serviceDoc.exists) {
                     const s = serviceDoc.data();
-                    items.push({ id: doc.id, serviceId: item.serviceId, title: s.title, price: s.price, quantity: item.quantity || 1 });
+                    items.push({ id: doc.id, serviceId: item.serviceId, title: s.title, price: s.price, quantity: item.quantity || 1, sellerId: s.creatorId });
                     total += s.price * (item.quantity || 1);
                 }
             }
+
+            // Vérifier si le solde est suffisant
+            const balance = userData.balance || 0;
+            const canBuy = balance >= total;
 
             let html = '<div class="orders-table"><h2>Votre panier</h2><table><thead><tr><th>Service</th><th>Prix unitaire</th><th>Quantité</th><th>Total</th><th>Action</th></tr></thead><tbody>';
             items.forEach(item => {
@@ -123,8 +126,8 @@
                 </tr>`;
             });
             html += `</tbody></table><p><strong>Total : ${total} FCFA</strong></p>`;
-            html += `<p><strong>Votre solde : ${userData.balance || 0} FCFA</strong></p>`;
-            if ((userData.balance || 0) >= total) {
+            html += `<p><strong>Votre solde : ${balance} FCFA</strong></p>`;
+            if (canBuy) {
                 html += `<button class="btn-success" onclick="checkout()">Passer la commande</button>`;
             } else {
                 html += `<p style="color:red;">Solde insuffisant. Veuillez recharger votre compte.</p>`;
@@ -150,18 +153,20 @@
                 const serviceDoc = await db.collection('services').doc(item.serviceId).get();
                 if (!serviceDoc.exists) continue;
                 const service = serviceDoc.data();
-                total += service.price * (item.quantity || 1);
+                const price = service.price * (item.quantity || 1);
+                total += price;
                 orders.push({
                     buyerId: currentUser.uid,
                     sellerId: service.creatorId,
                     serviceId: item.serviceId,
-                    amount: service.price,
+                    amount: price,
                     status: 'pending',
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
             }
 
-            if ((userData.balance || 0) < total) {
+            const balance = userData.balance || 0;
+            if (balance < total) {
                 showToast('Solde insuffisant', 'error');
                 return;
             }
@@ -183,8 +188,6 @@
 
             // Mettre à jour le solde local
             userData.balance -= total;
-            document.getElementById('headerBalance').textContent = `Solde: ${userData.balance} FCFA`;
-
             showToast('Commande passée avec succès !', 'success');
             loadCart();
         };
