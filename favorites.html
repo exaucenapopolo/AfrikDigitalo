@@ -105,8 +105,10 @@
                 const serviceDoc = await db.collection('services').doc(fav.serviceId).get();
                 if (serviceDoc.exists) {
                     const s = serviceDoc.data();
+                    const imageHtml = s.images && s.images.length > 0 ? `<img src="${s.images[0]}" style="width:100%; height:150px; object-fit:cover; border-radius:5px;">` : '';
                     html += `
                         <div class="service-card">
+                            ${imageHtml}
                             <h3>${s.title}</h3>
                             <p>${s.description.substring(0, 60)}...</p>
                             <div class="service-price">${s.price} FCFA</div>

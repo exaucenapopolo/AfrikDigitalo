@@ -15,6 +15,7 @@
             <span>Afrik<span class="highlight">Digitalo</span></span>
         </div>
         <div class="header-user">
+            <span id="headerBalance" style="font-weight:600; margin-right:10px;"></span>
             <span id="headerUserName">Utilisateur</span>
             <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
             <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
@@ -95,71 +96,42 @@
 
         async function loadOrders() {
             const listDiv = document.getElementById('ordersList');
+            let orders;
             if (userData.role === 'creator') {
-                // Commandes reçues (vendeur)
-                const orders = await db.collection('orders').where('sellerId', '==', currentUser.uid).orderBy('createdAt', 'desc').get();
-                if (orders.empty) {
-                    listDiv.innerHTML = '<p>Aucune commande reçue.</p>';
-                    return;
-                }
-                let html = '<div class="orders-table"><h2>Commandes reçues</h2><table><thead><tr><th>ID</th><th>Service</th><th>Acheteur</th><th>Montant</th><th>Statut</th><th>Date</th><th>Action</th></tr></thead><tbody>';
-                for (const doc of orders.docs) {
-                    const o = doc.data();
-                    const serviceDoc = await db.collection('services').doc(o.serviceId).get();
-                    const serviceTitle = serviceDoc.exists ? serviceDoc.data().title : 'Service inconnu';
-                    const buyerDoc = await db.collection('users').doc(o.buyerId).get();
-                    const buyerName = buyerDoc.exists ? buyerDoc.data().name : 'Inconnu';
-                    const date = o.createdAt ? new Date(o.createdAt.toDate()).toLocaleDateString() : 'N/A';
-                    html += `<tr>
-                        <td>${doc.id.slice(0, 6)}...</td>
-                        <td>${serviceTitle}</td>
-                        <td>${buyerName}</td>
-                        <td>${o.amount} FCFA</td>
-                        <td><span class="badge ${o.status === 'completed' ? 'success' : o.status === 'pending' ? 'warning' : 'danger'}">${o.status}</span></td>
-                        <td>${date}</td>
-                        <td>
-                            <select onchange="updateOrderStatus('${doc.id}', this.value)">
-                                <option value="pending" ${o.status === 'pending' ? 'selected' : ''}>En attente</option>
-                                <option value="completed" ${o.status === 'completed' ? 'selected' : ''}>Terminée</option>
-                                <option value="cancelled" ${o.status === 'cancelled' ? 'selected' : ''}>Annulée</option>
-                            </select>
-                        </td>
-                    </tr>`;
-                }
-                html += '</tbody></table></div>';
-                listDiv.innerHTML = html;
+                orders = await db.collection('orders').where('sellerId', '==', currentUser.uid).orderBy('createdAt', 'desc').get();
             } else {
-                // Achats (acheteur)
-                const orders = await db.collection('orders').where('buyerId', '==', currentUser.uid).orderBy('createdAt', 'desc').get();
-                if (orders.empty) {
-                    listDiv.innerHTML = '<p>Aucun achat effectué.</p>';
-                    return;
-                }
-                let html = '<div class="orders-table"><h2>Mes achats</h2><table><thead><tr><th>ID</th><th>Service</th><th>Vendeur</th><th>Montant</th><th>Statut</th><th>Date</th></tr></thead><tbody>';
-                for (const doc of orders.docs) {
-                    const o = doc.data();
-                    const serviceDoc = await db.collection('services').doc(o.serviceId).get();
-                    const serviceTitle = serviceDoc.exists ? serviceDoc.data().title : 'Service inconnu';
-                    const sellerDoc = await db.collection('users').doc(o.sellerId).get();
-                    const sellerName = sellerDoc.exists ? sellerDoc.data().name : 'Inconnu';
-                    const date = o.createdAt ? new Date(o.createdAt.toDate()).toLocaleDateString() : 'N/A';
-                    html += `<tr>
-                        <td>${doc.id.slice(0, 6)}...</td>
-                        <td>${serviceTitle}</td>
-                        <td>${sellerName}</td>
-                        <td>${o.amount} FCFA</td>
-                        <td><span class="badge ${o.status === 'completed' ? 'success' : o.status === 'pending' ? 'warning' : 'danger'}">${o.status}</span></td>
-                        <td>${date}</td>
-                    </tr>`;
-                }
-                html += '</tbody></table></div>';
-                listDiv.innerHTML = html;
+                orders = await db.collection('orders').where('buyerId', '==', currentUser.uid).orderBy('createdAt', 'desc').get();
             }
+            if (orders.empty) {
+                listDiv.innerHTML = '<p>Aucune commande.</p>';
+                return;
+            }
+            let html = '<div class="orders-table"><h2>Commandes</h2><table><thead><tr><th>ID</th><th>Service</th><th>Montant</th><th>Statut</th><th>Date</th><th>Action</th></tr></thead><tbody>';
+            for (const doc of orders.docs) {
+                const o = doc.data();
+                const serviceDoc = await db.collection('services').doc(o.serviceId).get();
+                const serviceTitle = serviceDoc.exists ? serviceDoc.data().title : 'Service inconnu';
+                const date = o.createdAt ? new Date(o.createdAt.toDate()).toLocaleDateString() : 'N/A';
+                let actionButton = '';
+                if (userData.role === 'creator' && o.status === 'pending') {
+                    actionButton = `<button class="btn-success" onclick="markAsCompleted('${doc.id}')">Marquer terminée</button>`;
+                }
+                html += `<tr>
+                    <td>${doc.id.slice(0, 6)}...</td>
+                    <td>${serviceTitle}</td>
+                    <td>${o.amount} FCFA</td>
+                    <td><span class="badge ${o.status === 'completed' ? 'success' : o.status === 'pending' ? 'warning' : 'danger'}">${o.status}</span></td>
+                    <td>${date}</td>
+                    <td>${actionButton}</td>
+                </tr>`;
+            }
+            html += '</tbody></table></div>';
+            listDiv.innerHTML = html;
         }
 
-        window.updateOrderStatus = async function(orderId, newStatus) {
-            await db.collection('orders').doc(orderId).update({ status: newStatus });
-            showToast('Statut mis à jour', 'success');
+        window.markAsCompleted = async function(orderId) {
+            await db.collection('orders').doc(orderId).update({ status: 'completed' });
+            showToast('Commande marquée comme terminée', 'success');
             loadOrders();
         };
     </script>

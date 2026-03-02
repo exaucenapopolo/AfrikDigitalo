@@ -15,6 +15,7 @@
             <span>Afrik<span class="highlight">Digitalo</span></span>
         </div>
         <div class="header-user">
+            <span id="headerBalance" style="font-weight:600; margin-right:10px;"></span>
             <span id="headerUserName">Utilisateur</span>
             <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
             <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
@@ -73,25 +74,20 @@
                     </select>
                 </div>
             </div>
-
-            <!-- Options spécifiques au créateur -->
-            <div id="creatorSettings" style="display: none;">
-                <div class="settings-group">
-                    <h3>Paramètres vendeur</h3>
-                    <div class="setting-item">
-                        <span>Commission personnalisée (actuellement 10%)</span>
-                        <span>Non modifiable</span>
-                    </div>
-                    <div class="setting-item">
-                        <span>Mode vacances</span>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="vacationMode">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
+            <div class="settings-group" id="creatorSettings" style="display: none;">
+                <h3>Paramètres créateur</h3>
+                <div class="setting-item">
+                    <span>Mode vacances</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="vacationMode">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <span>Commission personnalisée (%)</span>
+                    <input type="number" id="customCommission" min="0" max="100" step="0.1" value="10">
                 </div>
             </div>
-
             <button class="btn-save" onclick="saveSettings()">Enregistrer les paramètres</button>
         </main>
     </div>
@@ -123,7 +119,6 @@
             await requireAuth();
             if (!userData) return;
 
-            // Remplir la navigation
             const sections = userData.role === 'creator' ? [
                 { id: 'dashboard', url: 'dashboard.html', icon: 'fas fa-home', label: 'Accueil' },
                 { id: 'services', url: 'services.html', icon: 'fas fa-list', label: 'Mes services' },
@@ -147,20 +142,19 @@
                 <li><a href="${s.url}" class="${s.id === 'settings' ? 'active' : ''}"><i class="${s.icon}"></i> <span>${s.label}</span></a></li>
             `).join('');
 
-            // Afficher les options créateur si nécessaire
             if (userData.role === 'creator') {
                 document.getElementById('creatorSettings').style.display = 'block';
-                if (userData.settings) {
-                    document.getElementById('vacationMode').checked = userData.settings.vacationMode || false;
-                }
             }
 
-            // Charger les paramètres existants
             if (userData.settings) {
                 document.getElementById('notifEmail').checked = userData.settings.emailNotifications || false;
                 document.getElementById('notifPush').checked = userData.settings.pushNotifications || false;
                 document.getElementById('profilePublic').checked = userData.settings.publicProfile !== false;
                 document.getElementById('lang').value = userData.settings.lang || 'fr';
+                if (userData.role === 'creator') {
+                    document.getElementById('vacationMode').checked = userData.settings.vacationMode || false;
+                    document.getElementById('customCommission').value = userData.settings.customCommission || 10;
+                }
             }
         });
 
@@ -173,6 +167,7 @@
             };
             if (userData.role === 'creator') {
                 settings.vacationMode = document.getElementById('vacationMode').checked;
+                settings.customCommission = parseFloat(document.getElementById('customCommission').value);
             }
             await db.collection('users').doc(currentUser.uid).update({ settings });
             showToast('Paramètres enregistrés', 'success');

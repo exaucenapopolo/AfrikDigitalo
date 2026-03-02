@@ -38,7 +38,8 @@ async function requireAuth() {
                         name: user.displayName || '',
                         email: user.email,
                         role: 'buyer',
-                        balance: 0, // Solde initial
+                        balance: 0,
+                        photoURL: user.photoURL || null,
                         settings: { publicProfile: true }
                     };
                     await db.collection('users').doc(user.uid).set(userData);
