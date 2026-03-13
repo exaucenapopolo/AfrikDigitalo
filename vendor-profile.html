@@ -45,6 +45,12 @@
         <ul id="mobileNavList"></ul>
     </nav>
 
+    <!-- Lightbox pour les images -->
+    <div class="lightbox" id="lightbox">
+        <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+        <img id="lightboxImg" src="">
+    </div>
+
     <div class="modal" id="logoutModal">
         <div class="modal-content">
             <span class="modal-close" onclick="closeLogoutModal()">&times;</span>
@@ -144,7 +150,9 @@
             let servicesHtml = '';
             for (const doc of servicesSnap.docs) {
                 const s = doc.data();
-                const imageHtml = s.images && s.images.length > 0 ? `<img src="${s.images[0]}" style="width:100%; height:150px; object-fit:cover; border-radius:5px; margin-bottom:10px;">` : '';
+                const imageHtml = s.images && s.images.length > 0 
+                    ? `<img src="${s.images[0]}" onclick="openLightbox('${s.images[0]}')" style="width:100%; height:150px; object-fit:cover; border-radius:10px; margin-bottom:10px; cursor:pointer;">` 
+                    : '';
                 servicesHtml += `
                     <div class="service-card">
                         ${imageHtml}
@@ -183,6 +191,15 @@
                 <li><a href="${s.url}" class=""><i class="${s.icon}"></i> <span>${s.label}</span></a></li>
             `).join('');
         });
+
+        window.openLightbox = function(src) {
+            document.getElementById('lightboxImg').src = src;
+            document.getElementById('lightbox').classList.add('active');
+        };
+
+        window.closeLightbox = function() {
+            document.getElementById('lightbox').classList.remove('active');
+        };
 
         window.followCreator = async function(creatorId) {
             await db.collection('follows').add({

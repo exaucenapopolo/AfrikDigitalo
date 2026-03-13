@@ -15,6 +15,7 @@
             <span>Afrik<span class="highlight">Digitalo</span></span>
         </div>
         <div class="header-user">
+            <span id="headerBalance" style="font-weight:600; margin-right:10px;"></span>
             <span id="headerUserName">Utilisateur</span>
             <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
             <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
@@ -106,19 +107,23 @@
                 const serviceDoc = await db.collection('services').doc(item.serviceId).get();
                 if (serviceDoc.exists) {
                     const s = serviceDoc.data();
-                    items.push({ id: doc.id, serviceId: item.serviceId, title: s.title, price: s.price, quantity: item.quantity || 1, sellerId: s.creatorId });
+                    items.push({ 
+                        id: doc.id, 
+                        serviceId: item.serviceId, 
+                        title: s.title, 
+                        price: s.price, 
+                        quantity: item.quantity || 1,
+                        images: s.images || []
+                    });
                     total += s.price * (item.quantity || 1);
                 }
             }
 
-            // Vérifier si le solde est suffisant
-            const balance = userData.balance || 0;
-            const canBuy = balance >= total;
-
             let html = '<div class="orders-table"><h2>Votre panier</h2><table><thead><tr><th>Service</th><th>Prix unitaire</th><th>Quantité</th><th>Total</th><th>Action</th></tr></thead><tbody>';
             items.forEach(item => {
+                const imageHtml = item.images.length > 0 ? `<img src="${item.images[0]}" style="width:50px; height:50px; object-fit:cover; border-radius:5px; margin-right:10px;">` : '';
                 html += `<tr>
-                    <td>${item.title}</td>
+                    <td>${imageHtml} ${item.title}</td>
                     <td>${item.price} FCFA</td>
                     <td>${item.quantity}</td>
                     <td>${item.price * item.quantity} FCFA</td>
@@ -126,8 +131,8 @@
                 </tr>`;
             });
             html += `</tbody></table><p><strong>Total : ${total} FCFA</strong></p>`;
-            html += `<p><strong>Votre solde : ${balance} FCFA</strong></p>`;
-            if (canBuy) {
+            html += `<p><strong>Votre solde : ${userData.balance || 0} FCFA</strong></p>`;
+            if ((userData.balance || 0) >= total) {
                 html += `<button class="btn-success" onclick="checkout()">Passer la commande</button>`;
             } else {
                 html += `<p style="color:red;">Solde insuffisant. Veuillez recharger votre compte.</p>`;
@@ -153,31 +158,26 @@
                 const serviceDoc = await db.collection('services').doc(item.serviceId).get();
                 if (!serviceDoc.exists) continue;
                 const service = serviceDoc.data();
-                const price = service.price * (item.quantity || 1);
-                total += price;
+                total += service.price * (item.quantity || 1);
                 orders.push({
                     buyerId: currentUser.uid,
                     sellerId: service.creatorId,
                     serviceId: item.serviceId,
-                    amount: price,
+                    amount: service.price,
                     status: 'pending',
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
             }
 
-            const balance = userData.balance || 0;
-            if (balance < total) {
+            if ((userData.balance || 0) < total) {
                 showToast('Solde insuffisant', 'error');
                 return;
             }
 
-            // Effectuer la transaction
             const batch = db.batch();
-            // Déduire le solde de l'acheteur
             const userRef = db.collection('users').doc(currentUser.uid);
             batch.update(userRef, { balance: firebase.firestore.FieldValue.increment(-total) });
 
-            // Ajouter les commandes et supprimer le panier
             for (const order of orders) {
                 const orderRef = db.collection('orders').doc();
                 batch.set(orderRef, order);
@@ -186,8 +186,9 @@
 
             await batch.commit();
 
-            // Mettre à jour le solde local
             userData.balance -= total;
+            document.getElementById('headerBalance').textContent = `Solde: ${userData.balance} FCFA`;
+
             showToast('Commande passée avec succès !', 'success');
             loadCart();
         };

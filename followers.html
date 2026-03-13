@@ -104,13 +104,11 @@
                 const userDoc = await db.collection('users').doc(f.followerId).get();
                 if (userDoc.exists) {
                     const follower = userDoc.data();
-                    // Compter les achats de cet abonné chez ce vendeur
                     const ordersSnap = await db.collection('orders')
                         .where('buyerId', '==', f.followerId)
                         .where('sellerId', '==', currentUser.uid)
                         .get();
                     const ordersCount = ordersSnap.size;
-                    // Compter les favoris de cet abonné sur les services de ce vendeur
                     const servicesSnap = await db.collection('services').where('creatorId', '==', currentUser.uid).get();
                     let favCount = 0;
                     for (const svc of servicesSnap.docs) {

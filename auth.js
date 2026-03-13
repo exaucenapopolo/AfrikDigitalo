@@ -1,5 +1,4 @@
 // auth.js
-// Configuration Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyAWlhXhkaOei9RzX8hCNcCXnpjWVId_s48",
     authDomain: "madil-be5be.firebaseapp.com",
@@ -10,16 +9,13 @@ const firebaseConfig = {
     measurementId: "G-ZKXRFQDG93"
 };
 
-// Initialiser Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// Variables globales
 let currentUser = null;
 let userData = null;
 
-// Fonction de redirection si non connecté
 async function requireAuth() {
     return new Promise((resolve, reject) => {
         auth.onAuthStateChanged(async (user) => {
@@ -33,7 +29,6 @@ async function requireAuth() {
                 if (doc.exists) {
                     userData = doc.data();
                 } else {
-                    // Créer un doc par défaut
                     userData = {
                         name: user.displayName || '',
                         email: user.email,
@@ -44,7 +39,6 @@ async function requireAuth() {
                     };
                     await db.collection('users').doc(user.uid).set(userData);
                 }
-                // Mettre à jour l'en-tête
                 const headerUserName = document.getElementById('headerUserName');
                 const headerAvatar = document.getElementById('headerAvatar');
                 const headerBalance = document.getElementById('headerBalance');
@@ -58,7 +52,6 @@ async function requireAuth() {
                         headerBalance.style.display = 'none';
                     }
                 }
-                // Afficher bannière de vérification si nécessaire
                 const verificationBanner = document.getElementById('verificationBanner');
                 if (verificationBanner) {
                     verificationBanner.style.display = !user.emailVerified ? 'flex' : 'none';
@@ -72,7 +65,6 @@ async function requireAuth() {
     });
 }
 
-// Fonction utilitaire pour afficher les toasts
 function showToast(message, type = 'info') {
     const toast = document.getElementById('toast');
     if (!toast) return;
@@ -83,7 +75,6 @@ function showToast(message, type = 'info') {
     setTimeout(() => toast.classList.remove('show'), 4000);
 }
 
-// Fonction de déconnexion
 function logout() {
     document.getElementById('logoutModal').classList.add('active');
 }
@@ -93,7 +84,6 @@ function closeLogoutModal() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Gestion du menu mobile
     const menuToggle = document.getElementById('menuToggle');
     const sidebar = document.getElementById('sidebar');
     if (menuToggle && sidebar) {
@@ -107,13 +97,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Gestion du bouton de déconnexion dans le header
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', logout);
     }
 
-    // Gestion de la confirmation de déconnexion
     const confirmLogout = document.getElementById('confirmLogout');
     if (confirmLogout) {
         confirmLogout.addEventListener('click', () => {
@@ -122,7 +110,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Gestion du renvoi d'email de vérification
     const resendBtn = document.getElementById('resendVerificationBtn');
     if (resendBtn) {
         resendBtn.addEventListener('click', async () => {
@@ -133,7 +120,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Fermeture du modal de déconnexion
     const closeModalBtn = document.querySelector('#logoutModal .modal-close');
     if (closeModalBtn) {
         closeModalBtn.addEventListener('click', closeLogoutModal);

@@ -15,6 +15,7 @@
             <span>Afrik<span class="highlight">Digitalo</span></span>
         </div>
         <div class="header-user">
+            <span id="headerBalance" style="font-weight:600; margin-right:10px;"></span>
             <span id="headerUserName">Utilisateur</span>
             <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
             <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
@@ -32,12 +33,12 @@
 
         <main class="main-content" id="mainContent">
             <div id="verificationBanner" class="verification-banner" style="display: none;">
-                <p><i class="fas fa-exclamation-triangle"></i> Votre adresse email n'est pas encore vérifiée. Veuillez vérifier votre boîte mail pour activer votre compte.</p>
+                <p><i class="fas fa-exclamation-triangle"></i> Votre adresse email n'est pas encore vérifiée.</p>
                 <button id="resendVerificationBtn">Renvoyer l'email</button>
             </div>
 
             <div id="dynamicContent">
-                <!-- Le contenu spécifique à la page sera généré ici par le JS -->
+                <!-- Contenu dynamique -->
             </div>
         </main>
     </div>
@@ -69,7 +70,6 @@
             await requireAuth();
             if (!userData) return;
 
-            // Définir les sections de navigation en fonction du rôle
             const sections = userData.role === 'creator' ? [
                 { id: 'dashboard', url: 'dashboard.html', icon: 'fas fa-home', label: 'Accueil' },
                 { id: 'services', url: 'services.html', icon: 'fas fa-list', label: 'Mes services' },
@@ -87,18 +87,14 @@
                 { id: 'settings', url: 'settings.html', icon: 'fas fa-cog', label: 'Paramètres' }
             ];
 
-            // Remplir la sidebar et le mobile nav avec des liens
-            const sidebarNav = document.getElementById('sidebarNav');
-            sidebarNav.innerHTML = sections.map(s => `
+            document.getElementById('sidebarNav').innerHTML = sections.map(s => `
                 <li><a href="${s.url}" class="${s.id === 'dashboard' ? 'active' : ''}"><i class="${s.icon}"></i> ${s.label}</a></li>
             `).join('');
 
-            const mobileNavList = document.getElementById('mobileNavList');
-            mobileNavList.innerHTML = sections.map(s => `
+            document.getElementById('mobileNavList').innerHTML = sections.map(s => `
                 <li><a href="${s.url}" class="${s.id === 'dashboard' ? 'active' : ''}"><i class="${s.icon}"></i> <span>${s.label}</span></a></li>
             `).join('');
 
-            // Charger les données du tableau de bord
             await loadDashboard();
         });
 
@@ -107,28 +103,22 @@
             if (!contentDiv) return;
 
             if (userData.role === 'creator') {
-                // Statistiques créateur
                 const servicesSnap = await db.collection('services').where('creatorId', '==', currentUser.uid).get();
                 const ordersSnap = await db.collection('orders').where('sellerId', '==', currentUser.uid).get();
                 const followersSnap = await db.collection('follows').where('followingId', '==', currentUser.uid).get();
 
-                // Calcul des revenus (après commission de 10% pour l'entreprise)
                 let revenue = 0;
-                ordersSnap.forEach(doc => revenue += doc.data().amount * 0.9); // 90% pour le vendeur
+                ordersSnap.forEach(doc => revenue += doc.data().amount || 0);
 
-                // Compter les ajouts au panier pour chaque service
                 let totalCartAdds = 0;
                 for (const doc of servicesSnap.docs) {
-                    const serviceId = doc.id;
-                    const cartSnap = await db.collection('cart').where('serviceId', '==', serviceId).get();
+                    const cartSnap = await db.collection('cart').where('serviceId', '==', doc.id).get();
                     totalCartAdds += cartSnap.size;
                 }
 
-                // Compter les favoris
                 let totalFavs = 0;
                 for (const doc of servicesSnap.docs) {
-                    const serviceId = doc.id;
-                    const favSnap = await db.collection('favorites').where('serviceId', '==', serviceId).get();
+                    const favSnap = await db.collection('favorites').where('serviceId', '==', doc.id).get();
                     totalFavs += favSnap.size;
                 }
 
@@ -136,7 +126,7 @@
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
-                            <div class="stat-details"><h3>Revenus (après commission)</h3><p>${revenue} FCFA</p></div>
+                            <div class="stat-details"><h3>Revenus</h3><p>${revenue} FCFA</p></div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon"><i class="fas fa-shopping-cart"></i></div>
@@ -163,7 +153,6 @@
                 `;
                 contentDiv.innerHTML = html;
 
-                // Récupérer les 5 dernières commandes
                 const recentOrders = await db.collection('orders')
                     .where('sellerId', '==', currentUser.uid)
                     .orderBy('createdAt', 'desc')
@@ -181,19 +170,12 @@
                     listDiv.innerHTML = listHtml;
                 }
             } else {
-                // Acheteur
                 const ordersSnap = await db.collection('orders').where('buyerId', '==', currentUser.uid).get();
                 let spent = 0;
                 ordersSnap.forEach(doc => spent += doc.data().amount || 0);
                 const favSnap = await db.collection('favorites').where('userId', '==', currentUser.uid).get();
 
-                // Section solde bien visible
                 let html = `
-                    <div style="background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border-radius: 10px; padding: 30px; margin-bottom: 30px; text-align: center;">
-                        <h2 style="margin-bottom: 10px;">Votre solde</h2>
-                        <p style="font-size: 3rem; font-weight: 700;">${userData.balance || 0} FCFA</p>
-                        <p style="margin-top: 10px;">Utilisez votre solde pour acheter des services</p>
-                    </div>
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-icon"><i class="fas fa-shopping-bag"></i></div>
@@ -206,6 +188,10 @@
                         <div class="stat-card">
                             <div class="stat-icon"><i class="fas fa-heart"></i></div>
                             <div class="stat-details"><h3>Favoris</h3><p>${favSnap.size}</p></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-wallet"></i></div>
+                            <div class="stat-details"><h3>Solde</h3><p>${userData.balance || 0} FCFA</p></div>
                         </div>
                     </div>
                     <div class="orders-table"><h2>Derniers achats</h2><div id="recentPurchasesList">Chargement...</div></div>

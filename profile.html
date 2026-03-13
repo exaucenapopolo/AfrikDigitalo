@@ -114,7 +114,6 @@
             await requireAuth();
             if (!userData) return;
 
-            // Remplir les listes déroulantes
             const pays = ["Sénégal", "Côte d'Ivoire", "Cameroun", "Maroc", "Tunisie", "Algérie", "Burkina Faso", "Mali", "Nigéria", "Afrique du Sud", "Kenya", "Ghana", "Congo", "RDC", "Bénin", "Togo", "Niger", "Mauritanie", "Guinée", "Éthiopie", "Ouganda", "Rwanda", "Tanzanie", "Madagascar"];
             const countrySelect = document.getElementById('profileCountry');
             countrySelect.innerHTML = '<option value="">Sélectionnez</option>' + pays.map(p => `<option value="${p}">${p}</option>`).join('');
@@ -134,12 +133,10 @@
             const catSelect = document.getElementById('profileCategory');
             catSelect.innerHTML = '<option value="">Sélectionnez</option>' + categories.map(c => `<option value="${c}">${c}</option>`).join('');
 
-            // Afficher les champs créateur si nécessaire
             if (userData.role === 'creator') {
                 document.getElementById('creatorFields').style.display = 'block';
             }
 
-            // Remplir les valeurs existantes
             document.getElementById('profileName').value = userData.name || '';
             document.getElementById('profileEmail').value = currentUser.email;
             document.getElementById('profileWhatsapp').value = userData.whatsapp || '';
@@ -149,11 +146,9 @@
                 document.getElementById('profileCategory').value = userData.category || '';
                 document.getElementById('profileDesc').value = userData.description || '';
             }
-            // Afficher la photo de profil
             const avatarPreview = document.getElementById('profileAvatarPreview');
             avatarPreview.src = userData.photoURL || 'https://randomuser.me/api/portraits/lego/1.jpg';
 
-            // Remplir la navigation
             const sections = userData.role === 'creator' ? [
                 { id: 'dashboard', url: 'dashboard.html', icon: 'fas fa-home', label: 'Accueil' },
                 { id: 'services', url: 'services.html', icon: 'fas fa-list', label: 'Mes services' },
@@ -177,7 +172,6 @@
                 <li><a href="${s.url}" class="${s.id === 'profile' ? 'active' : ''}"><i class="${s.icon}"></i> <span>${s.label}</span></a></li>
             `).join('');
 
-            // Upload de la photo de profil
             document.getElementById('avatarUpload').addEventListener('change', async function(e) {
                 const file = e.target.files[0];
                 if (!file) return;
@@ -193,7 +187,6 @@
                     });
                     const data = await res.json();
                     if (data.secure_url) {
-                        // Mettre à jour dans Firestore
                         await db.collection('users').doc(currentUser.uid).update({ photoURL: data.secure_url });
                         userData.photoURL = data.secure_url;
                         document.getElementById('profileAvatarPreview').src = data.secure_url;
@@ -205,7 +198,6 @@
                 }
             });
 
-            // Gestion de la soumission du formulaire
             document.getElementById('profileForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const updates = {

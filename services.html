@@ -100,6 +100,12 @@
         </div>
     </div>
 
+    <!-- Lightbox pour les images -->
+    <div class="lightbox" id="lightbox">
+        <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+        <img id="lightboxImg" src="">
+    </div>
+
     <div class="modal" id="logoutModal">
         <div class="modal-content">
             <span class="modal-close" onclick="closeLogoutModal()">&times;</span>
@@ -120,7 +126,7 @@
     <script src="auth.js"></script>
     <script>
         let editingServiceId = null;
-        let uploadedImages = []; // pour stocker les URLs pendant l'upload
+        let uploadedImages = [];
 
         document.addEventListener('DOMContentLoaded', async () => {
             await requireAuth();
@@ -131,7 +137,6 @@
                 return;
             }
 
-            // Remplir les catégories
             const catSelect = document.getElementById('serviceCategory');
             const categories = [
                 "Développement web", "Développement mobile", "Design graphique", "Illustration", "Logo design",
@@ -147,7 +152,6 @@
             ];
             catSelect.innerHTML = '<option value="">Sélectionnez</option>' + categories.map(c => `<option value="${c}">${c}</option>`).join('');
 
-            // Remplir la navigation
             const sections = [
                 { id: 'dashboard', url: 'dashboard.html', icon: 'fas fa-home', label: 'Accueil' },
                 { id: 'services', url: 'services.html', icon: 'fas fa-list', label: 'Mes services' },
@@ -183,8 +187,9 @@
                 const orderSnap = await db.collection('orders').where('serviceId', '==', doc.id).get();
                 const orderCount = orderSnap.size;
 
-                // Afficher la première image si elle existe
-                const imageHtml = s.images && s.images.length > 0 ? `<img src="${s.images[0]}" style="width:100%; height:150px; object-fit:cover; border-radius:5px; margin-bottom:10px;">` : '';
+                const imageHtml = s.images && s.images.length > 0 
+                    ? `<img src="${s.images[0]}" onclick="openLightbox('${s.images[0]}')" style="width:100%; height:150px; object-fit:cover; border-radius:10px; margin-bottom:10px; cursor:pointer;">` 
+                    : '';
 
                 html += `
                     <div class="service-card">
@@ -235,16 +240,14 @@
             document.getElementById('servicePrice').value = s.price;
             document.getElementById('serviceCategory').value = s.category;
             document.getElementById('serviceDelivery').value = s.deliveryDays;
-            // Afficher les images existantes
             if (s.images && s.images.length) {
                 uploadedImages = s.images;
                 let previewHtml = '';
                 s.images.forEach((url, index) => {
-                    previewHtml += `<img src="${url}" style="width:100px; height:100px; object-fit:cover; border-radius:5px;">`;
+                    previewHtml += `<img src="${url}" onclick="openLightbox('${url}')" style="width:100px; height:100px; object-fit:cover; border-radius:5px; margin-right:5px; cursor:pointer;">`;
                 });
                 document.getElementById('imagePreviewContainer').innerHTML = previewHtml;
             }
-            // Remplir la FAQ
             if (s.faq && s.faq.length) {
                 s.faq.forEach((item, i) => {
                     if (i < 3) {
@@ -264,7 +267,6 @@
             }
         };
 
-        // Gestion de l'upload des images
         async function uploadImage(file) {
             const formData = new FormData();
             formData.append("file", file);
@@ -307,10 +309,19 @@
         function updateImagePreview() {
             let html = '';
             uploadedImages.forEach(url => {
-                html += `<img src="${url}" style="width:100px; height:100px; object-fit:cover; border-radius:5px; margin-right:5px;">`;
+                html += `<img src="${url}" onclick="openLightbox('${url}')" style="width:100px; height:100px; object-fit:cover; border-radius:5px; margin-right:5px; cursor:pointer;">`;
             });
             document.getElementById('imagePreviewContainer').innerHTML = html;
         }
+
+        window.openLightbox = function(src) {
+            document.getElementById('lightboxImg').src = src;
+            document.getElementById('lightbox').classList.add('active');
+        };
+
+        window.closeLightbox = function() {
+            document.getElementById('lightbox').classList.remove('active');
+        };
 
         document.getElementById('serviceForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -320,7 +331,6 @@
             const category = document.getElementById('serviceCategory').value;
             const delivery = parseInt(document.getElementById('serviceDelivery').value);
 
-            // Récupérer la FAQ
             const faq = [];
             for (let i = 1; i <= 3; i++) {
                 const q = document.getElementById(`faqQuestion${i}`).value;
@@ -342,7 +352,7 @@
                 price,
                 category,
                 deliveryDays: delivery,
-                images: uploadedImages, // tableau d'URLs
+                images: uploadedImages,
                 faq: faq,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };

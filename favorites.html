@@ -45,6 +45,12 @@
         <ul id="mobileNavList"></ul>
     </nav>
 
+    <!-- Lightbox pour les images -->
+    <div class="lightbox" id="lightbox">
+        <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+        <img id="lightboxImg" src="">
+    </div>
+
     <div class="modal" id="logoutModal">
         <div class="modal-content">
             <span class="modal-close" onclick="closeLogoutModal()">&times;</span>
@@ -92,6 +98,15 @@
             await loadFavorites();
         });
 
+        window.openLightbox = function(src) {
+            document.getElementById('lightboxImg').src = src;
+            document.getElementById('lightbox').classList.add('active');
+        };
+
+        window.closeLightbox = function() {
+            document.getElementById('lightbox').classList.remove('active');
+        };
+
         async function loadFavorites() {
             const listDiv = document.getElementById('favoritesList');
             const favSnap = await db.collection('favorites').where('userId', '==', currentUser.uid).get();
@@ -105,7 +120,9 @@
                 const serviceDoc = await db.collection('services').doc(fav.serviceId).get();
                 if (serviceDoc.exists) {
                     const s = serviceDoc.data();
-                    const imageHtml = s.images && s.images.length > 0 ? `<img src="${s.images[0]}" style="width:100%; height:150px; object-fit:cover; border-radius:5px;">` : '';
+                    const imageHtml = s.images && s.images.length > 0 
+                        ? `<img src="${s.images[0]}" onclick="openLightbox('${s.images[0]}')" style="width:100%; height:150px; object-fit:cover; border-radius:10px; cursor:pointer;">` 
+                        : '';
                     html += `
                         <div class="service-card">
                             ${imageHtml}
