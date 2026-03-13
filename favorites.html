@@ -11,18 +11,15 @@
 <body>
     <header class="main-header">
         <div class="logo">
-            <i class="fas fa-globe-africa"></i>
+            <img src="https://raw.githubusercontent.com/exaucenapopolo/AfrikDigitalo/refs/heads/main/Photo/ezgif-693a681e148aad8a.gif" alt="AfrikDigitalo">
             <span>Afrik<span class="highlight">Digitalo</span></span>
         </div>
         <div class="header-user">
-            <span id="headerBalance" style="font-weight:600; margin-right:10px;"></span>
             <span id="headerUserName">Utilisateur</span>
             <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
             <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
         </div>
     </header>
-
-    <button class="mobile-menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
 
     <div class="dashboard">
         <aside class="sidebar" id="sidebar">
@@ -45,10 +42,16 @@
         <ul id="mobileNavList"></ul>
     </nav>
 
-    <!-- Lightbox pour les images -->
-    <div class="lightbox" id="lightbox">
-        <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
-        <img id="lightboxImg" src="">
+    <!-- Modal de confirmation -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content">
+            <h3>Confirmation</h3>
+            <p id="confirmMessage">Êtes-vous sûr ?</p>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-primary" id="confirmYes">Oui</button>
+                <button class="btn btn-secondary" onclick="closeConfirmModal()">Non</button>
+            </div>
+        </div>
     </div>
 
     <div class="modal" id="logoutModal">
@@ -70,6 +73,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="auth.js"></script>
     <script>
+        let confirmCallback = null;
+
         document.addEventListener('DOMContentLoaded', async () => {
             await requireAuth();
             if (!userData) return;
@@ -98,15 +103,6 @@
             await loadFavorites();
         });
 
-        window.openLightbox = function(src) {
-            document.getElementById('lightboxImg').src = src;
-            document.getElementById('lightbox').classList.add('active');
-        };
-
-        window.closeLightbox = function() {
-            document.getElementById('lightbox').classList.remove('active');
-        };
-
         async function loadFavorites() {
             const listDiv = document.getElementById('favoritesList');
             const favSnap = await db.collection('favorites').where('userId', '==', currentUser.uid).get();
@@ -120,9 +116,7 @@
                 const serviceDoc = await db.collection('services').doc(fav.serviceId).get();
                 if (serviceDoc.exists) {
                     const s = serviceDoc.data();
-                    const imageHtml = s.images && s.images.length > 0 
-                        ? `<img src="${s.images[0]}" onclick="openLightbox('${s.images[0]}')" style="width:100%; height:150px; object-fit:cover; border-radius:10px; cursor:pointer;">` 
-                        : '';
+                    const imageHtml = s.images && s.images.length > 0 ? `<img src="${s.images[0]}" style="width:100%; height:150px; object-fit:cover; border-radius:5px; cursor:pointer;" onclick="window.open('${s.images[0]}')">` : '';
                     html += `
                         <div class="service-card">
                             ${imageHtml}
@@ -131,7 +125,7 @@
                             <div class="service-price">${s.price} FCFA</div>
                             <div class="service-actions">
                                 <button class="btn-buy" onclick="addToCart('${fav.serviceId}')">Ajouter au panier</button>
-                                <button class="btn-delete" onclick="removeFavorite('${doc.id}')">Retirer</button>
+                                <button class="btn-delete" onclick="confirmRemoveFavorite('${doc.id}')">Retirer</button>
                             </div>
                         </div>
                     `;
@@ -155,11 +149,30 @@
             showToast('Ajouté au panier', 'success');
         };
 
-        window.removeFavorite = async function(favId) {
-            await db.collection('favorites').doc(favId).delete();
-            showToast('Retiré des favoris', 'success');
-            loadFavorites();
+        window.confirmRemoveFavorite = function(favId) {
+            showConfirm('Retirer des favoris ?', async () => {
+                await db.collection('favorites').doc(favId).delete();
+                showToast('Retiré des favoris', 'success');
+                loadFavorites();
+            });
         };
+
+        // Modal de confirmation
+        window.showConfirm = function(message, callback) {
+            document.getElementById('confirmMessage').textContent = message;
+            confirmCallback = callback;
+            document.getElementById('confirmModal').classList.add('active');
+        };
+        window.closeConfirmModal = function() {
+            document.getElementById('confirmModal').classList.remove('active');
+            confirmCallback = null;
+        };
+        document.getElementById('confirmYes').addEventListener('click', () => {
+            if (confirmCallback) {
+                confirmCallback();
+            }
+            closeConfirmModal();
+        });
     </script>
 </body>
 </html>

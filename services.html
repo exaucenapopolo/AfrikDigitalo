@@ -11,18 +11,15 @@
 <body>
     <header class="main-header">
         <div class="logo">
-            <i class="fas fa-globe-africa"></i>
+            <img src="https://raw.githubusercontent.com/exaucenapopolo/AfrikDigitalo/refs/heads/main/Photo/ezgif-693a681e148aad8a.gif" alt="AfrikDigitalo">
             <span>Afrik<span class="highlight">Digitalo</span></span>
         </div>
         <div class="header-user">
-            <span id="headerBalance" style="font-weight:600; margin-right:10px;"></span>
             <span id="headerUserName">Utilisateur</span>
             <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
             <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
         </div>
     </header>
-
-    <button class="mobile-menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
 
     <div class="dashboard">
         <aside class="sidebar" id="sidebar">
@@ -100,10 +97,16 @@
         </div>
     </div>
 
-    <!-- Lightbox pour les images -->
-    <div class="lightbox" id="lightbox">
-        <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
-        <img id="lightboxImg" src="">
+    <!-- Modal de confirmation -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content">
+            <h3>Confirmation</h3>
+            <p id="confirmMessage">Êtes-vous sûr ?</p>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-primary" id="confirmYes">Oui</button>
+                <button class="btn btn-secondary" onclick="closeConfirmModal()">Non</button>
+            </div>
+        </div>
     </div>
 
     <div class="modal" id="logoutModal">
@@ -127,6 +130,7 @@
     <script>
         let editingServiceId = null;
         let uploadedImages = [];
+        let confirmCallback = null;
 
         document.addEventListener('DOMContentLoaded', async () => {
             await requireAuth();
@@ -187,9 +191,7 @@
                 const orderSnap = await db.collection('orders').where('serviceId', '==', doc.id).get();
                 const orderCount = orderSnap.size;
 
-                const imageHtml = s.images && s.images.length > 0 
-                    ? `<img src="${s.images[0]}" onclick="openLightbox('${s.images[0]}')" style="width:100%; height:150px; object-fit:cover; border-radius:10px; margin-bottom:10px; cursor:pointer;">` 
-                    : '';
+                const imageHtml = s.images && s.images.length > 0 ? `<img src="${s.images[0]}" onclick="window.open('${s.images[0]}')" style="width:100%; height:150px; object-fit:cover; border-radius:5px; margin-bottom:10px; cursor:pointer;">` : '';
 
                 html += `
                     <div class="service-card">
@@ -202,7 +204,7 @@
                         <div><i class="fas fa-shopping-bag"></i> ${orderCount} vendus</div>
                         <div class="service-actions">
                             <button class="btn-edit" onclick="editService('${doc.id}')"><i class="fas fa-edit"></i> Modifier</button>
-                            <button class="btn-delete" onclick="deleteService('${doc.id}')"><i class="fas fa-trash"></i> Supprimer</button>
+                            <button class="btn-delete" onclick="confirmDeleteService('${doc.id}')"><i class="fas fa-trash"></i> Supprimer</button>
                         </div>
                     </div>
                 `;
@@ -244,7 +246,7 @@
                 uploadedImages = s.images;
                 let previewHtml = '';
                 s.images.forEach((url, index) => {
-                    previewHtml += `<img src="${url}" onclick="openLightbox('${url}')" style="width:100px; height:100px; object-fit:cover; border-radius:5px; margin-right:5px; cursor:pointer;">`;
+                    previewHtml += `<img src="${url}" style="width:100px; height:100px; object-fit:cover; border-radius:5px; margin-right:5px; cursor:pointer;" onclick="window.open('${url}')">`;
                 });
                 document.getElementById('imagePreviewContainer').innerHTML = previewHtml;
             }
@@ -259,12 +261,12 @@
             document.getElementById('serviceModal').classList.add('active');
         };
 
-        window.deleteService = async function(id) {
-            if (confirm('Supprimer ce service ?')) {
+        window.confirmDeleteService = function(id) {
+            showConfirm('Supprimer ce service ?', async () => {
                 await db.collection('services').doc(id).delete();
                 showToast('Service supprimé', 'success');
                 loadServices();
-            }
+            });
         };
 
         async function uploadImage(file) {
@@ -309,19 +311,10 @@
         function updateImagePreview() {
             let html = '';
             uploadedImages.forEach(url => {
-                html += `<img src="${url}" onclick="openLightbox('${url}')" style="width:100px; height:100px; object-fit:cover; border-radius:5px; margin-right:5px; cursor:pointer;">`;
+                html += `<img src="${url}" style="width:100px; height:100px; object-fit:cover; border-radius:5px; margin-right:5px; cursor:pointer;" onclick="window.open('${url}')">`;
             });
             document.getElementById('imagePreviewContainer').innerHTML = html;
         }
-
-        window.openLightbox = function(src) {
-            document.getElementById('lightboxImg').src = src;
-            document.getElementById('lightbox').classList.add('active');
-        };
-
-        window.closeLightbox = function() {
-            document.getElementById('lightbox').classList.remove('active');
-        };
 
         document.getElementById('serviceForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -371,6 +364,23 @@
             } catch (error) {
                 showToast(error.message, 'error');
             }
+        });
+
+        // Modal de confirmation
+        window.showConfirm = function(message, callback) {
+            document.getElementById('confirmMessage').textContent = message;
+            confirmCallback = callback;
+            document.getElementById('confirmModal').classList.add('active');
+        };
+        window.closeConfirmModal = function() {
+            document.getElementById('confirmModal').classList.remove('active');
+            confirmCallback = null;
+        };
+        document.getElementById('confirmYes').addEventListener('click', () => {
+            if (confirmCallback) {
+                confirmCallback();
+            }
+            closeConfirmModal();
         });
     </script>
 </body>

@@ -11,18 +11,15 @@
 <body>
     <header class="main-header">
         <div class="logo">
-            <i class="fas fa-globe-africa"></i>
+            <img src="https://raw.githubusercontent.com/exaucenapopolo/AfrikDigitalo/refs/heads/main/Photo/ezgif-693a681e148aad8a.gif" alt="AfrikDigitalo">
             <span>Afrik<span class="highlight">Digitalo</span></span>
         </div>
         <div class="header-user">
-            <span id="headerBalance" style="font-weight:600; margin-right:10px;"></span>
             <span id="headerUserName">Utilisateur</span>
             <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
             <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
         </div>
     </header>
-
-    <button class="mobile-menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
 
     <div class="dashboard">
         <aside class="sidebar" id="sidebar">
@@ -45,6 +42,18 @@
         <ul id="mobileNavList"></ul>
     </nav>
 
+    <!-- Modal de confirmation -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content">
+            <h3>Confirmation</h3>
+            <p id="confirmMessage">Êtes-vous sûr ?</p>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-primary" id="confirmYes">Oui</button>
+                <button class="btn btn-secondary" onclick="closeConfirmModal()">Non</button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal" id="logoutModal">
         <div class="modal-content">
             <span class="modal-close" onclick="closeLogoutModal()">&times;</span>
@@ -64,6 +73,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="auth.js"></script>
     <script>
+        let confirmCallback = null;
+
         document.addEventListener('DOMContentLoaded', async () => {
             await requireAuth();
             if (!userData) return;
@@ -121,13 +132,13 @@
 
             let html = '<div class="orders-table"><h2>Votre panier</h2><table><thead><tr><th>Service</th><th>Prix unitaire</th><th>Quantité</th><th>Total</th><th>Action</th></tr></thead><tbody>';
             items.forEach(item => {
-                const imageHtml = item.images.length > 0 ? `<img src="${item.images[0]}" style="width:50px; height:50px; object-fit:cover; border-radius:5px; margin-right:10px;">` : '';
+                const imageHtml = item.images.length > 0 ? `<img src="${item.images[0]}" style="width:50px; height:50px; object-fit:cover; border-radius:5px; margin-right:10px; cursor:pointer;" onclick="window.open('${item.images[0]}')">` : '';
                 html += `<tr>
                     <td>${imageHtml} ${item.title}</td>
                     <td>${item.price} FCFA</td>
-                    <td>${item.quantity}</td>
+                    <td><input type="number" min="1" value="${item.quantity}" style="width:60px;" onchange="updateQuantity('${item.id}', this.value)"></td>
                     <td>${item.price * item.quantity} FCFA</td>
-                    <td><button class="btn-delete" onclick="removeFromCart('${item.id}')"><i class="fas fa-trash"></i></button></td>
+                    <td><button class="btn-delete" onclick="confirmRemoveFromCart('${item.id}')"><i class="fas fa-trash"></i></button></td>
                 </tr>`;
             });
             html += `</tbody></table><p><strong>Total : ${total} FCFA</strong></p>`;
@@ -135,16 +146,26 @@
             if ((userData.balance || 0) >= total) {
                 html += `<button class="btn-success" onclick="checkout()">Passer la commande</button>`;
             } else {
-                html += `<p style="color:red;">Solde insuffisant. Veuillez recharger votre compte.</p>`;
+                html += `<p style="color:red;">Solde insuffisant. <a href="dashboard.html" style="color:var(--primary);">Recharger</a></p>`;
             }
             html += '</div>';
             contentDiv.innerHTML = html;
         }
 
-        window.removeFromCart = async function(cartId) {
-            await db.collection('cart').doc(cartId).delete();
-            showToast('Retiré du panier', 'success');
+        window.updateQuantity = async function(cartId, newQuantity) {
+            const q = parseInt(newQuantity);
+            if (q < 1) return;
+            await db.collection('cart').doc(cartId).update({ quantity: q });
+            showToast('Quantité mise à jour', 'success');
             loadCart();
+        };
+
+        window.confirmRemoveFromCart = function(cartId) {
+            showConfirm('Voulez-vous retirer cet article du panier ?', async () => {
+                await db.collection('cart').doc(cartId).delete();
+                showToast('Article retiré', 'success');
+                loadCart();
+            });
         };
 
         window.checkout = async function() {
@@ -164,6 +185,7 @@
                     sellerId: service.creatorId,
                     serviceId: item.serviceId,
                     amount: service.price,
+                    quantity: item.quantity || 1,
                     status: 'pending',
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
@@ -174,24 +196,41 @@
                 return;
             }
 
-            const batch = db.batch();
-            const userRef = db.collection('users').doc(currentUser.uid);
-            batch.update(userRef, { balance: firebase.firestore.FieldValue.increment(-total) });
+            showConfirm('Confirmez-vous l\'achat de ces articles ?', async () => {
+                const batch = db.batch();
+                const userRef = db.collection('users').doc(currentUser.uid);
+                batch.update(userRef, { balance: firebase.firestore.FieldValue.increment(-total) });
 
-            for (const order of orders) {
-                const orderRef = db.collection('orders').doc();
-                batch.set(orderRef, order);
-            }
-            cartSnap.docs.forEach(doc => batch.delete(doc.ref));
+                for (const order of orders) {
+                    const orderRef = db.collection('orders').doc();
+                    batch.set(orderRef, order);
+                }
+                cartSnap.docs.forEach(doc => batch.delete(doc.ref));
 
-            await batch.commit();
+                await batch.commit();
 
-            userData.balance -= total;
-            document.getElementById('headerBalance').textContent = `Solde: ${userData.balance} FCFA`;
-
-            showToast('Commande passée avec succès !', 'success');
-            loadCart();
+                userData.balance -= total;
+                showToast('Commande passée avec succès !', 'success');
+                loadCart();
+            });
         };
+
+        // Modal de confirmation
+        window.showConfirm = function(message, callback) {
+            document.getElementById('confirmMessage').textContent = message;
+            confirmCallback = callback;
+            document.getElementById('confirmModal').classList.add('active');
+        };
+        window.closeConfirmModal = function() {
+            document.getElementById('confirmModal').classList.remove('active');
+            confirmCallback = null;
+        };
+        document.getElementById('confirmYes').addEventListener('click', () => {
+            if (confirmCallback) {
+                confirmCallback();
+            }
+            closeConfirmModal();
+        });
     </script>
 </body>
 </html>

@@ -11,18 +11,15 @@
 <body>
     <header class="main-header">
         <div class="logo">
-            <i class="fas fa-globe-africa"></i>
+            <img src="https://raw.githubusercontent.com/exaucenapopolo/AfrikDigitalo/refs/heads/main/Photo/ezgif-693a681e148aad8a.gif" alt="AfrikDigitalo">
             <span>Afrik<span class="highlight">Digitalo</span></span>
         </div>
         <div class="header-user">
-            <span id="headerBalance" style="font-weight:600; margin-right:10px;"></span>
             <span id="headerUserName">Utilisateur</span>
             <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
             <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
         </div>
     </header>
-
-    <button class="mobile-menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
 
     <div class="dashboard">
         <aside class="sidebar" id="sidebar">
@@ -45,6 +42,18 @@
         <ul id="mobileNavList"></ul>
     </nav>
 
+    <!-- Modal de confirmation -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content">
+            <h3>Confirmation</h3>
+            <p id="confirmMessage">Êtes-vous sûr ?</p>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-primary" id="confirmYes">Oui</button>
+                <button class="btn btn-secondary" onclick="closeConfirmModal()">Non</button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal" id="logoutModal">
         <div class="modal-content">
             <span class="modal-close" onclick="closeLogoutModal()">&times;</span>
@@ -64,6 +73,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="auth.js"></script>
     <script>
+        let confirmCallback = null;
+
         document.addEventListener('DOMContentLoaded', async () => {
             await requireAuth();
             if (!userData) return;
@@ -115,7 +126,8 @@
                     return;
                 }
                 
-                let html = '<div class="orders-table"><h2>Commandes</h2><table><thead><tr><th>ID</th><th>Service</th><th>Montant</th><th>Statut</th><th>Date</th><th>Action</th></tr></thead><tbody>';
+                let html = '<div class="orders-table"><h2>Commandes</h2><table><thead><tr><th>ID</th><th>Service</th><th>Montant</th><th>Quantité</th><th>Statut</th><th>Date</th><th>Action</th></tr></thead><tbody>';
+                
                 for (const doc of orders.docs) {
                     const o = doc.data();
                     const serviceDoc = await db.collection('services').doc(o.serviceId).get();
@@ -123,12 +135,16 @@
                     const date = o.createdAt ? new Date(o.createdAt.toDate()).toLocaleDateString() : 'N/A';
                     let actionButton = '';
                     if (userData.role === 'creator' && o.status === 'pending') {
-                        actionButton = `<button class="btn-success" onclick="markAsCompleted('${doc.id}')">Marquer terminée</button>`;
+                        actionButton = `
+                            <button class="btn-success" onclick="markAsCompleted('${doc.id}')">Terminer</button>
+                            <button class="btn-danger" onclick="rejectOrder('${doc.id}', '${o.buyerId}', ${o.amount})">Rejeter</button>
+                        `;
                     }
                     html += `<tr>
                         <td>${doc.id.slice(0, 6)}...</td>
                         <td>${serviceTitle}</td>
                         <td>${o.amount} FCFA</td>
+                        <td>${o.quantity || 1}</td>
                         <td><span class="badge ${o.status === 'completed' ? 'success' : o.status === 'pending' ? 'warning' : 'danger'}">${o.status}</span></td>
                         <td>${date}</td>
                         <td>${actionButton}</td>
@@ -138,7 +154,7 @@
                 listDiv.innerHTML = html;
             } catch (error) {
                 console.error("Erreur chargement commandes:", error);
-                listDiv.innerHTML = '<p>Erreur de chargement. Vérifiez les index Firestore.</p>';
+                listDiv.innerHTML = `<p style="color:red;">Erreur de chargement: ${error.message}</p>`;
             }
         }
 
@@ -147,6 +163,37 @@
             showToast('Commande marquée comme terminée', 'success');
             loadOrders();
         };
+
+        window.rejectOrder = async function(orderId, buyerId, amount) {
+            showConfirm('Voulez-vous rejeter cette commande ? L\'acheteur sera remboursé.', async () => {
+                const batch = db.batch();
+                // Rembourser l'acheteur
+                const buyerRef = db.collection('users').doc(buyerId);
+                batch.update(buyerRef, { balance: firebase.firestore.FieldValue.increment(amount) });
+                // Marquer la commande comme rejetée
+                batch.update(db.collection('orders').doc(orderId), { status: 'rejected' });
+                await batch.commit();
+                showToast('Commande rejetée et remboursement effectué', 'success');
+                loadOrders();
+            });
+        };
+
+        // Modal de confirmation
+        window.showConfirm = function(message, callback) {
+            document.getElementById('confirmMessage').textContent = message;
+            confirmCallback = callback;
+            document.getElementById('confirmModal').classList.add('active');
+        };
+        window.closeConfirmModal = function() {
+            document.getElementById('confirmModal').classList.remove('active');
+            confirmCallback = null;
+        };
+        document.getElementById('confirmYes').addEventListener('click', () => {
+            if (confirmCallback) {
+                confirmCallback();
+            }
+            closeConfirmModal();
+        });
     </script>
 </body>
 </html>

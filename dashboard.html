@@ -11,18 +11,17 @@
 <body>
     <header class="main-header">
         <div class="logo">
-            <i class="fas fa-globe-africa"></i>
+            <img src="https://raw.githubusercontent.com/exaucenapopolo/AfrikDigitalo/refs/heads/main/Photo/ezgif-693a681e148aad8a.gif" alt="AfrikDigitalo">
             <span>Afrik<span class="highlight">Digitalo</span></span>
         </div>
         <div class="header-user">
-            <span id="headerBalance" style="font-weight:600; margin-right:10px;"></span>
             <span id="headerUserName">Utilisateur</span>
             <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
             <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
         </div>
     </header>
 
-    <button class="mobile-menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+    <!-- Suppression du bouton flottant -->
 
     <div class="dashboard">
         <aside class="sidebar" id="sidebar">
@@ -33,12 +32,12 @@
 
         <main class="main-content" id="mainContent">
             <div id="verificationBanner" class="verification-banner" style="display: none;">
-                <p><i class="fas fa-exclamation-triangle"></i> Votre adresse email n'est pas encore vérifiée.</p>
+                <p><i class="fas fa-exclamation-triangle"></i> Votre adresse email n'est pas encore vérifiée. Veuillez vérifier votre boîte mail pour activer votre compte.</p>
                 <button id="resendVerificationBtn">Renvoyer l'email</button>
             </div>
 
             <div id="dynamicContent">
-                <!-- Contenu dynamique -->
+                <!-- Le contenu sera généré ici -->
             </div>
         </main>
     </div>
@@ -46,6 +45,31 @@
     <nav class="mobile-nav" id="mobileNav">
         <ul id="mobileNavList"></ul>
     </nav>
+
+    <!-- Modal de recharge (pour acheteur) -->
+    <div class="modal" id="rechargeModal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeRechargeModal()">&times;</span>
+            <h3>Recharger votre solde</h3>
+            <div class="form-group">
+                <label>Montant (FCFA)</label>
+                <input type="number" id="rechargeAmount" min="100" step="100" value="1000">
+            </div>
+            <button class="btn-save" onclick="simulateRecharge()">Recharger</button>
+        </div>
+    </div>
+
+    <!-- Modal de confirmation pour les actions -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content">
+            <h3>Confirmation</h3>
+            <p id="confirmMessage">Êtes-vous sûr ?</p>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-primary" id="confirmYes">Oui</button>
+                <button class="btn btn-secondary" onclick="closeConfirmModal()">Non</button>
+            </div>
+        </div>
+    </div>
 
     <div class="modal" id="logoutModal">
         <div class="modal-content">
@@ -66,6 +90,10 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="auth.js"></script>
     <script>
+        // Variables globales pour les modals
+        let confirmCallback = null;
+        let currentAction = null;
+
         document.addEventListener('DOMContentLoaded', async () => {
             await requireAuth();
             if (!userData) return;
@@ -103,6 +131,7 @@
             if (!contentDiv) return;
 
             if (userData.role === 'creator') {
+                // Dashboard vendeur
                 const servicesSnap = await db.collection('services').where('creatorId', '==', currentUser.uid).get();
                 const ordersSnap = await db.collection('orders').where('sellerId', '==', currentUser.uid).get();
                 const followersSnap = await db.collection('follows').where('followingId', '==', currentUser.uid).get();
@@ -123,36 +152,62 @@
                 }
 
                 let html = `
+                    <div class="hero-section">
+                        <h1>Bienvenue sur votre espace vendeur, ${userData.name || 'cher partenaire'}!</h1>
+                        <p>Gérez vos services, suivez vos commandes et développez votre activité.</p>
+                    </div>
                     <div class="stats-grid">
-                        <div class="stat-card">
+                        <div class="stat-card featured">
                             <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
-                            <div class="stat-details"><h3>Revenus</h3><p>${revenue} FCFA</p></div>
+                            <div class="stat-details">
+                                <h3>Revenus totaux</h3>
+                                <p>${revenue} FCFA</p>
+                            </div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon"><i class="fas fa-shopping-cart"></i></div>
-                            <div class="stat-details"><h3>Commandes</h3><p>${ordersSnap.size}</p></div>
+                            <div class="stat-details">
+                                <h3>Commandes</h3>
+                                <p>${ordersSnap.size}</p>
+                            </div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon"><i class="fas fa-users"></i></div>
-                            <div class="stat-details"><h3>Abonnés</h3><p>${followersSnap.size}</p></div>
+                            <div class="stat-details">
+                                <h3>Abonnés</h3>
+                                <p>${followersSnap.size}</p>
+                            </div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon"><i class="fas fa-list"></i></div>
-                            <div class="stat-details"><h3>Services</h3><p>${servicesSnap.size}</p></div>
+                            <div class="stat-details">
+                                <h3>Services</h3>
+                                <p>${servicesSnap.size}</p>
+                            </div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon"><i class="fas fa-cart-plus"></i></div>
-                            <div class="stat-details"><h3>Ajouts panier</h3><p>${totalCartAdds}</p></div>
+                            <div class="stat-details">
+                                <h3>Ajouts panier</h3>
+                                <p>${totalCartAdds}</p>
+                            </div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon"><i class="fas fa-heart"></i></div>
-                            <div class="stat-details"><h3>Favoris</h3><p>${totalFavs}</p></div>
+                            <div class="stat-details">
+                                <h3>Favoris</h3>
+                                <p>${totalFavs}</p>
+                            </div>
                         </div>
                     </div>
-                    <div class="orders-table"><h2>Dernières commandes</h2><div id="recentOrdersList">Chargement...</div></div>
+                    <div class="orders-table">
+                        <h2>Dernières commandes</h2>
+                        <div id="recentOrdersList">Chargement...</div>
+                    </div>
                 `;
                 contentDiv.innerHTML = html;
 
+                // Récupérer les 5 dernières commandes
                 const recentOrders = await db.collection('orders')
                     .where('sellerId', '==', currentUser.uid)
                     .orderBy('createdAt', 'desc')
@@ -165,36 +220,61 @@
                     let listHtml = '';
                     recentOrders.forEach(doc => {
                         const o = doc.data();
-                        listHtml += `<div class="activity-item">Commande ${doc.id.slice(0,6)} - ${o.amount} FCFA - ${o.status}</div>`;
+                        const statusClass = o.status === 'completed' ? 'success' : o.status === 'pending' ? 'warning' : 'danger';
+                        listHtml += `<div class="activity-item">
+                            <span>Commande ${doc.id.slice(0,6)} - ${o.amount} FCFA</span>
+                            <span class="badge ${statusClass}">${o.status}</span>
+                        </div>`;
                     });
                     listDiv.innerHTML = listHtml;
                 }
             } else {
+                // Dashboard acheteur
                 const ordersSnap = await db.collection('orders').where('buyerId', '==', currentUser.uid).get();
                 let spent = 0;
                 ordersSnap.forEach(doc => spent += doc.data().amount || 0);
                 const favSnap = await db.collection('favorites').where('userId', '==', currentUser.uid).get();
 
                 let html = `
+                    <div class="hero-section">
+                        <h1>Bienvenue, ${userData.name || 'cher client'}!</h1>
+                        <p>Explorez des milliers de services, suivez vos achats et gérez vos favoris.</p>
+                    </div>
                     <div class="stats-grid">
+                        <div class="stat-card featured">
+                            <div class="stat-icon"><i class="fas fa-wallet"></i></div>
+                            <div class="stat-details">
+                                <h3>Votre solde</h3>
+                                <p>${userData.balance || 0} FCFA</p>
+                            </div>
+                            <button class="btn btn-success" onclick="openRechargeModal()" style="margin-left: auto;">Recharger</button>
+                        </div>
                         <div class="stat-card">
                             <div class="stat-icon"><i class="fas fa-shopping-bag"></i></div>
-                            <div class="stat-details"><h3>Achats</h3><p>${ordersSnap.size}</p></div>
+                            <div class="stat-details">
+                                <h3>Achats</h3>
+                                <p>${ordersSnap.size}</p>
+                            </div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon"><i class="fas fa-clock"></i></div>
-                            <div class="stat-details"><h3>Dépenses</h3><p>${spent} FCFA</p></div>
+                            <div class="stat-details">
+                                <h3>Dépenses</h3>
+                                <p>${spent} FCFA</p>
+                            </div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon"><i class="fas fa-heart"></i></div>
-                            <div class="stat-details"><h3>Favoris</h3><p>${favSnap.size}</p></div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon"><i class="fas fa-wallet"></i></div>
-                            <div class="stat-details"><h3>Solde</h3><p>${userData.balance || 0} FCFA</p></div>
+                            <div class="stat-details">
+                                <h3>Favoris</h3>
+                                <p>${favSnap.size}</p>
+                            </div>
                         </div>
                     </div>
-                    <div class="orders-table"><h2>Derniers achats</h2><div id="recentPurchasesList">Chargement...</div></div>
+                    <div class="orders-table">
+                        <h2>Derniers achats</h2>
+                        <div id="recentPurchasesList">Chargement...</div>
+                    </div>
                 `;
                 contentDiv.innerHTML = html;
 
@@ -210,12 +290,59 @@
                     let listHtml = '';
                     recentPurchases.forEach(doc => {
                         const o = doc.data();
-                        listHtml += `<div class="activity-item">Achat ${doc.id.slice(0,6)} - ${o.amount} FCFA - ${o.status}</div>`;
+                        const statusClass = o.status === 'completed' ? 'success' : o.status === 'pending' ? 'warning' : 'danger';
+                        listHtml += `<div class="activity-item">
+                            <span>Achat ${doc.id.slice(0,6)} - ${o.amount} FCFA</span>
+                            <span class="badge ${statusClass}">${o.status}</span>
+                        </div>`;
                     });
                     listDiv.innerHTML = listHtml;
                 }
             }
         }
+
+        // Fonctions pour le modal de recharge
+        window.openRechargeModal = function() {
+            document.getElementById('rechargeModal').classList.add('active');
+        };
+        window.closeRechargeModal = function() {
+            document.getElementById('rechargeModal').classList.remove('active');
+        };
+        window.simulateRecharge = async function() {
+            const amount = parseFloat(document.getElementById('rechargeAmount').value);
+            if (isNaN(amount) || amount <= 0) {
+                showToast('Montant invalide', 'error');
+                return;
+            }
+            // Simuler une recharge
+            const newBalance = (userData.balance || 0) + amount;
+            await db.collection('users').doc(currentUser.uid).update({ balance: newBalance });
+            userData.balance = newBalance;
+            showToast(`Solde rechargé de ${amount} FCFA`, 'success');
+            closeRechargeModal();
+            // Recharger la page pour mettre à jour l'affichage
+            loadDashboard();
+        };
+
+        // Fonctions pour le modal de confirmation
+        window.showConfirm = function(message, callback) {
+            document.getElementById('confirmMessage').textContent = message;
+            confirmCallback = callback;
+            document.getElementById('confirmModal').classList.add('active');
+        };
+        window.closeConfirmModal = function() {
+            document.getElementById('confirmModal').classList.remove('active');
+            confirmCallback = null;
+        };
+        document.getElementById('confirmYes').addEventListener('click', () => {
+            if (confirmCallback) {
+                confirmCallback();
+            }
+            closeConfirmModal();
+        });
+
+        // Fonctions de déconnexion (déjà dans auth.js mais on les redéfinit pour les modals)
+        window.closeLogoutModal = closeLogoutModal;
     </script>
 </body>
 </html>

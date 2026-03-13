@@ -11,18 +11,15 @@
 <body>
     <header class="main-header">
         <div class="logo">
-            <i class="fas fa-globe-africa"></i>
+            <img src="https://raw.githubusercontent.com/exaucenapopolo/AfrikDigitalo/refs/heads/main/Photo/ezgif-693a681e148aad8a.gif" alt="AfrikDigitalo">
             <span>Afrik<span class="highlight">Digitalo</span></span>
         </div>
         <div class="header-user">
-            <span id="headerBalance" style="font-weight:600; margin-right:10px;"></span>
             <span id="headerUserName">Utilisateur</span>
             <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
             <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
         </div>
     </header>
-
-    <button class="mobile-menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
 
     <div class="dashboard">
         <aside class="sidebar" id="sidebar">
@@ -98,17 +95,19 @@
                 listDiv.innerHTML = '<p>Vous n\'avez pas encore d\'abonnés.</p>';
                 return;
             }
-            let html = '<div class="orders-table"><h2>Mes abonnés</h2><table><thead><tr><th>Avatar</th><th>Nom</th><th>Achats</th><th>Favoris</th><th>Depuis</th></tr></thead><tbody>';
+            let html = '<div class="orders-table"><h2>Mes abonnés</h2><table><thead><tr><th>Avatar</th><th>Nom</th><th>Achats chez vous</th><th>Favoris de vos services</th><th>Depuis</th></tr></thead><tbody>';
             for (const doc of followersSnap.docs) {
                 const f = doc.data();
                 const userDoc = await db.collection('users').doc(f.followerId).get();
                 if (userDoc.exists) {
                     const follower = userDoc.data();
+                    // Compter les achats de cet abonné chez ce vendeur
                     const ordersSnap = await db.collection('orders')
                         .where('buyerId', '==', f.followerId)
                         .where('sellerId', '==', currentUser.uid)
                         .get();
                     const ordersCount = ordersSnap.size;
+                    // Compter les favoris de cet abonné sur les services de ce vendeur
                     const servicesSnap = await db.collection('services').where('creatorId', '==', currentUser.uid).get();
                     let favCount = 0;
                     for (const svc of servicesSnap.docs) {
