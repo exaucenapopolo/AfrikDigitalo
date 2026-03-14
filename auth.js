@@ -45,11 +45,8 @@ async function requireAuth() {
                     await db.collection('users').doc(user.uid).set(userData);
                 }
                 // Mettre à jour l'en-tête
-                const headerUserName = document.getElementById('headerUserName');
                 const headerAvatar = document.getElementById('headerAvatar');
-                if (headerUserName) headerUserName.textContent = userData.name || user.email;
                 if (headerAvatar) headerAvatar.src = userData.photoURL || 'https://randomuser.me/api/portraits/lego/1.jpg';
-                
                 // Afficher bannière de vérification si nécessaire
                 const verificationBanner = document.getElementById('verificationBanner');
                 if (verificationBanner) {
@@ -85,14 +82,18 @@ function closeLogoutModal() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Gestion du menu mobile - on supprime le menuToggle car on l'enlève
-    // On garde juste la gestion du clic pour ouvrir/fermer le sidebar? Non, on enlève le bouton flottant.
-    // Donc on ne fait rien pour le menuToggle.
-    
-    // Gestion du bouton de déconnexion dans le header
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', logout);
+    // Gestion du menu mobile (si présent)
+    const menuToggle = document.getElementById('menuToggle');
+    const sidebar = document.getElementById('sidebar');
+    if (menuToggle && sidebar) {
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+        });
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768 && !sidebar.contains(e.target) && !menuToggle.contains(e.target) && sidebar.classList.contains('open')) {
+                sidebar.classList.remove('open');
+            }
+        });
     }
 
     // Gestion de la confirmation de déconnexion
