@@ -15,26 +15,15 @@
             <span>Afrik<span class="highlight">Digitalo</span></span>
         </div>
         <div class="header-user">
-            <span id="headerUserName">Utilisateur</span>
-            <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
-            <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
+            <button class="header-icon-btn" onclick="location.href='settings.html'"><i class="fas fa-cog"></i></button>
+            <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar" onclick="location.href='profile.html'">
         </div>
     </header>
 
     <div class="dashboard">
-        <aside class="sidebar" id="sidebar">
-            <nav>
-                <ul id="sidebarNav"></ul>
-            </nav>
-        </aside>
-
-        <main class="main-content" id="mainContent">
-            <div id="verificationBanner" class="verification-banner" style="display: none;">
-                <p><i class="fas fa-exclamation-triangle"></i> Votre adresse email n'est pas encore vérifiée.</p>
-                <button id="resendVerificationBtn">Renvoyer l'email</button>
-            </div>
-
-            <div class="profile-form" id="profileFormContainer">
+        <aside class="sidebar"></aside>
+        <main class="main-content">
+            <div class="profile-form">
                 <h2>Mon profil</h2>
                 <div style="text-align: center; margin-bottom: 20px;">
                     <img id="profileAvatarPreview" src="" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary);">
@@ -58,9 +47,7 @@
                     </div>
                     <div class="form-group">
                         <label>Pays</label>
-                        <select id="profileCountry" required>
-                            <option value="">Sélectionnez</option>
-                        </select>
+                        <select id="profileCountry" required></select>
                     </div>
                     <div id="creatorFields" style="display: none;">
                         <div class="form-group">
@@ -69,9 +56,7 @@
                         </div>
                         <div class="form-group">
                             <label>Catégorie principale</label>
-                            <select id="profileCategory">
-                                <option value="">Sélectionnez</option>
-                            </select>
+                            <select id="profileCategory"></select>
                         </div>
                         <div class="form-group">
                             <label>Description</label>
@@ -80,6 +65,8 @@
                     </div>
                     <button type="submit" class="btn-save">Mettre à jour</button>
                 </form>
+                <hr style="margin: 30px 0;">
+                <button class="btn btn-danger" onclick="confirmLogout()" style="width:100%;">Se déconnecter</button>
             </div>
         </main>
     </div>
@@ -111,22 +98,12 @@
             await requireAuth();
             if (!userData) return;
 
+            // Remplir les listes
             const pays = ["Sénégal", "Côte d'Ivoire", "Cameroun", "Maroc", "Tunisie", "Algérie", "Burkina Faso", "Mali", "Nigéria", "Afrique du Sud", "Kenya", "Ghana", "Congo", "RDC", "Bénin", "Togo", "Niger", "Mauritanie", "Guinée", "Éthiopie", "Ouganda", "Rwanda", "Tanzanie", "Madagascar"];
             const countrySelect = document.getElementById('profileCountry');
             countrySelect.innerHTML = '<option value="">Sélectionnez</option>' + pays.map(p => `<option value="${p}">${p}</option>`).join('');
 
-            const categories = [
-                "Développement web", "Développement mobile", "Design graphique", "Illustration", "Logo design",
-                "UI/UX design", "Motion design", "Montage vidéo", "Animation 2D/3D", "Photographie",
-                "Rédaction web", "Copywriting", "Traduction", "Relecture", "Community management",
-                "Marketing digital", "SEO", "Publicité en ligne", "Email marketing", "Influence",
-                "Musique", "Composition", "Mixage audio", "Podcast", "Voix off",
-                "Conseil", "Coaching", "Formation en ligne", "E-learning", "Création de contenu",
-                "Gestion de projet", "Assistanat virtuel", "Saisie de données", "Transcription", "Recherche",
-                "Architecture", "Ingénierie", "Comptabilité", "Juridique", "Traductions techniques",
-                "Jeux vidéo", "Réalité virtuelle", "Intelligence artificielle", "Blockchain", "Cybersécurité",
-                "Réseaux", "Support technique", "Administration système", "Cloud computing", "Data science"
-            ];
+            const categories = [ "Développement web", "Développement mobile", "Design graphique", "Illustration", "Logo design", "UI/UX design", "Motion design", "Montage vidéo", "Animation 2D/3D", "Photographie", "Rédaction web", "Copywriting", "Traduction", "Relecture", "Community management", "Marketing digital", "SEO", "Publicité en ligne", "Email marketing", "Influence", "Musique", "Composition", "Mixage audio", "Podcast", "Voix off", "Conseil", "Coaching", "Formation en ligne", "E-learning", "Création de contenu", "Gestion de projet", "Assistanat virtuel", "Saisie de données", "Transcription", "Recherche", "Architecture", "Ingénierie", "Comptabilité", "Juridique", "Traductions techniques", "Jeux vidéo", "Réalité virtuelle", "Intelligence artificielle", "Blockchain", "Cybersécurité", "Réseaux", "Support technique", "Administration système", "Cloud computing", "Data science" ];
             const catSelect = document.getElementById('profileCategory');
             catSelect.innerHTML = '<option value="">Sélectionnez</option>' + categories.map(c => `<option value="${c}">${c}</option>`).join('');
 
@@ -143,52 +120,41 @@
                 document.getElementById('profileCategory').value = userData.category || '';
                 document.getElementById('profileDesc').value = userData.description || '';
             }
-            const avatarPreview = document.getElementById('profileAvatarPreview');
-            avatarPreview.src = userData.photoURL || 'https://randomuser.me/api/portraits/lego/1.jpg';
+            document.getElementById('profileAvatarPreview').src = userData.photoURL || 'https://randomuser.me/api/portraits/lego/1.jpg';
 
+            // Navigation mobile
             const sections = userData.role === 'creator' ? [
-                { id: 'dashboard', url: 'dashboard.html', icon: 'fas fa-home', label: 'Accueil' },
-                { id: 'services', url: 'services.html', icon: 'fas fa-list', label: 'Mes services' },
-                { id: 'orders', url: 'orders.html', icon: 'fas fa-shopping-bag', label: 'Commandes' },
-                { id: 'followers', url: 'followers.html', icon: 'fas fa-users', label: 'Abonnés' },
-                { id: 'profile', url: 'profile.html', icon: 'fas fa-user', label: 'Profil' },
-                { id: 'settings', url: 'settings.html', icon: 'fas fa-cog', label: 'Paramètres' }
+                { id: 'dashboard', url: 'creator-dashboard.html', icon: 'fas fa-home', label: 'Accueil' },
+                { id: 'services', url: 'services.html', icon: 'fas fa-list', label: 'Services' },
+                { id: 'orders', url: 'creator-orders.html', icon: 'fas fa-shopping-bag', label: 'Commandes' },
+                { id: 'followers', url: 'followers.html', icon: 'fas fa-users', label: 'Abonnés' }
             ] : [
                 { id: 'dashboard', url: 'dashboard.html', icon: 'fas fa-home', label: 'Accueil' },
                 { id: 'explore', url: 'explore.html', icon: 'fas fa-search', label: 'Explorer' },
                 { id: 'cart', url: 'cart.html', icon: 'fas fa-shopping-cart', label: 'Panier' },
-                { id: 'orders', url: 'orders.html', icon: 'fas fa-history', label: 'Mes achats' },
-                { id: 'favorites', url: 'favorites.html', icon: 'fas fa-heart', label: 'Favoris' },
-                { id: 'profile', url: 'profile.html', icon: 'fas fa-user', label: 'Profil' },
-                { id: 'settings', url: 'settings.html', icon: 'fas fa-cog', label: 'Paramètres' }
+                { id: 'orders', url: 'orders.html', icon: 'fas fa-history', label: 'Achats' },
+                { id: 'favorites', url: 'favorites.html', icon: 'fas fa-heart', label: 'Favoris' }
             ];
-            document.getElementById('sidebarNav').innerHTML = sections.map(s => `
-                <li><a href="${s.url}" class="${s.id === 'profile' ? 'active' : ''}"><i class="${s.icon}"></i> ${s.label}</a></li>
-            `).join('');
             document.getElementById('mobileNavList').innerHTML = sections.map(s => `
-                <li><a href="${s.url}" class="${s.id === 'profile' ? 'active' : ''}"><i class="${s.icon}"></i> <span>${s.label}</span></a></li>
+                <li><a href="${s.url}" class=""><i class="${s.icon}"></i> <span>${s.label}</span></a></li>
             `).join('');
 
+            // Upload avatar
             document.getElementById('avatarUpload').addEventListener('change', async function(e) {
                 const file = e.target.files[0];
                 if (!file) return;
-
                 const formData = new FormData();
                 formData.append("file", file);
                 formData.append("upload_preset", "afrikdigitalo_upload");
-
                 try {
-                    const res = await fetch("https://api.cloudinary.com/v1_1/do83voiqy/image/upload", {
-                        method: "POST",
-                        body: formData
-                    });
+                    const res = await fetch("https://api.cloudinary.com/v1_1/do83voiqy/image/upload", { method: "POST", body: formData });
                     const data = await res.json();
                     if (data.secure_url) {
                         await db.collection('users').doc(currentUser.uid).update({ photoURL: data.secure_url });
                         userData.photoURL = data.secure_url;
                         document.getElementById('profileAvatarPreview').src = data.secure_url;
                         document.getElementById('headerAvatar').src = data.secure_url;
-                        showToast('Photo de profil mise à jour', 'success');
+                        showToast('Photo mise à jour', 'success');
                     }
                 } catch (error) {
                     showToast("Erreur d'upload", 'error');
@@ -207,15 +173,21 @@
                     updates.category = document.getElementById('profileCategory').value;
                     updates.description = document.getElementById('profileDesc').value;
                 }
-                try {
-                    await db.collection('users').doc(currentUser.uid).update(updates);
-                    showToast('Profil mis à jour', 'success');
-                    userData = { ...userData, ...updates };
-                    document.getElementById('headerUserName').textContent = userData.name;
-                } catch (error) {
-                    showToast(error.message, 'error');
-                }
+                await db.collection('users').doc(currentUser.uid).update(updates);
+                showToast('Profil mis à jour', 'success');
+                userData = { ...userData, ...updates };
             });
+        });
+
+        window.confirmLogout = function() {
+            document.getElementById('logoutModal').classList.add('active');
+        };
+        window.closeLogoutModal = function() {
+            document.getElementById('logoutModal').classList.remove('active');
+        };
+        document.getElementById('confirmLogout').addEventListener('click', () => {
+            auth.signOut();
+            closeLogoutModal();
         });
     </script>
 </body>

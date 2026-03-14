@@ -3,10 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Accueil - AfrikDigitalo</title>
+    <title>Tableau de bord - AfrikDigitalo</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Styles spécifiques à la page */
+        .hero-section {
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--dark) 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .hero-content {
+            position: relative;
+            z-index: 1;
+        }
+        .hero-content h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        .hero-content h1 span {
+            color: var(--primary);
+            font-weight: 700;
+            font-family: 'Montserrat', sans-serif;
+        }
+        .hero-content p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+        .hero-stats {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        .hero-stat {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .hero-stat i {
+            font-size: 2rem;
+            color: var(--primary);
+        }
+        .hero-stat div p:first-child {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        .hero-stat div p:last-child {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+    </style>
 </head>
 <body>
     <header class="main-header">
@@ -15,15 +81,15 @@
             <span>Afrik<span class="highlight">Digitalo</span></span>
         </div>
         <div class="header-user">
-            <span id="headerUserName">Utilisateur</span>
-            <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
-            <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
+            <button class="header-icon-btn" id="settingsBtn" onclick="location.href='settings.html'"><i class="fas fa-cog"></i></button>
+            <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar" onclick="location.href='profile.html'">
         </div>
     </header>
 
-    <!-- Suppression du bouton flottant -->
+    <!-- Plus de bouton flottant -->
 
     <div class="dashboard">
+        <!-- Sidebar desktop (on peut la garder mais on ne l'utilise pas) -->
         <aside class="sidebar" id="sidebar">
             <nav>
                 <ul id="sidebarNav"></ul>
@@ -36,40 +102,60 @@
                 <button id="resendVerificationBtn">Renvoyer l'email</button>
             </div>
 
-            <div id="dynamicContent">
-                <!-- Le contenu sera généré ici -->
+            <!-- Section héros -->
+            <div class="hero-section">
+                <div class="hero-content">
+                    <h1>Bonjour, <span id="userNameDisplay"></span> !</h1>
+                    <p>Bienvenue sur AfrikDigitalo, la plateforme qui connecte les talents africains. Explorez des milliers de services, suivez vos créateurs préférés et passez commande en toute simplicité.</p>
+                    <div class="hero-stats">
+                        <div class="hero-stat">
+                            <i class="fas fa-shopping-bag"></i>
+                            <div>
+                                <p>Achats</p>
+                                <p id="totalPurchases">0</p>
+                            </div>
+                        </div>
+                        <div class="hero-stat">
+                            <i class="fas fa-clock"></i>
+                            <div>
+                                <p>Dépenses</p>
+                                <p id="totalSpent">0 FCFA</p>
+                            </div>
+                        </div>
+                        <div class="hero-stat">
+                            <i class="fas fa-heart"></i>
+                            <div>
+                                <p>Favoris</p>
+                                <p id="totalFavorites">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Carte de solde animée -->
+            <div class="balance-card">
+                <div class="balance-title">Votre solde</div>
+                <div class="balance-amount" id="balanceAmount">0 FCFA</div>
+                <div class="balance-actions">
+                    <button class="btn-balance" onclick="location.href='recharge.html'"><i class="fas fa-plus-circle"></i> Recharger</button>
+                    <button class="btn-balance" onclick="location.href='withdraw.html'"><i class="fas fa-minus-circle"></i> Retirer</button>
+                </div>
+            </div>
+
+            <!-- Derniers achats -->
+            <div class="orders-table">
+                <h2>Derniers achats</h2>
+                <div id="recentPurchasesList" class="activity-list">Chargement...</div>
             </div>
         </main>
     </div>
 
     <nav class="mobile-nav" id="mobileNav">
-        <ul id="mobileNavList"></ul>
+        <ul id="mobileNavList">
+            <!-- Rempli par JS -->
+        </ul>
     </nav>
-
-    <!-- Modal de recharge (pour acheteur) -->
-    <div class="modal" id="rechargeModal">
-        <div class="modal-content">
-            <span class="modal-close" onclick="closeRechargeModal()">&times;</span>
-            <h3>Recharger votre solde</h3>
-            <div class="form-group">
-                <label>Montant (FCFA)</label>
-                <input type="number" id="rechargeAmount" min="100" step="100" value="1000">
-            </div>
-            <button class="btn-save" onclick="simulateRecharge()">Recharger</button>
-        </div>
-    </div>
-
-    <!-- Modal de confirmation pour les actions -->
-    <div class="modal" id="confirmModal">
-        <div class="modal-content">
-            <h3>Confirmation</h3>
-            <p id="confirmMessage">Êtes-vous sûr ?</p>
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button class="btn btn-primary" id="confirmYes">Oui</button>
-                <button class="btn btn-secondary" onclick="closeConfirmModal()">Non</button>
-            </div>
-        </div>
-    </div>
 
     <div class="modal" id="logoutModal">
         <div class="modal-content">
@@ -90,259 +176,84 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="auth.js"></script>
     <script>
-        // Variables globales pour les modals
-        let confirmCallback = null;
-        let currentAction = null;
-
         document.addEventListener('DOMContentLoaded', async () => {
             await requireAuth();
             if (!userData) return;
 
-            const sections = userData.role === 'creator' ? [
-                { id: 'dashboard', url: 'dashboard.html', icon: 'fas fa-home', label: 'Accueil' },
-                { id: 'services', url: 'services.html', icon: 'fas fa-list', label: 'Mes services' },
-                { id: 'orders', url: 'orders.html', icon: 'fas fa-shopping-bag', label: 'Commandes' },
-                { id: 'followers', url: 'followers.html', icon: 'fas fa-users', label: 'Abonnés' },
-                { id: 'profile', url: 'profile.html', icon: 'fas fa-user', label: 'Profil' },
-                { id: 'settings', url: 'settings.html', icon: 'fas fa-cog', label: 'Paramètres' }
-            ] : [
+            // Vérifier le rôle
+            if (userData.role !== 'buyer') {
+                window.location.href = 'creator-dashboard.html';
+                return;
+            }
+
+            // Afficher le nom
+            document.getElementById('userNameDisplay').textContent = userData.name || 'cher utilisateur';
+
+            // Mettre à jour le solde
+            document.getElementById('balanceAmount').textContent = (userData.balance || 0) + ' FCFA';
+
+            // Navigation mobile
+            const sections = [
                 { id: 'dashboard', url: 'dashboard.html', icon: 'fas fa-home', label: 'Accueil' },
                 { id: 'explore', url: 'explore.html', icon: 'fas fa-search', label: 'Explorer' },
                 { id: 'cart', url: 'cart.html', icon: 'fas fa-shopping-cart', label: 'Panier' },
                 { id: 'orders', url: 'orders.html', icon: 'fas fa-history', label: 'Mes achats' },
-                { id: 'favorites', url: 'favorites.html', icon: 'fas fa-heart', label: 'Favoris' },
-                { id: 'profile', url: 'profile.html', icon: 'fas fa-user', label: 'Profil' },
-                { id: 'settings', url: 'settings.html', icon: 'fas fa-cog', label: 'Paramètres' }
+                { id: 'favorites', url: 'favorites.html', icon: 'fas fa-heart', label: 'Favoris' }
             ];
-
-            document.getElementById('sidebarNav').innerHTML = sections.map(s => `
-                <li><a href="${s.url}" class="${s.id === 'dashboard' ? 'active' : ''}"><i class="${s.icon}"></i> ${s.label}</a></li>
-            `).join('');
-
             document.getElementById('mobileNavList').innerHTML = sections.map(s => `
                 <li><a href="${s.url}" class="${s.id === 'dashboard' ? 'active' : ''}"><i class="${s.icon}"></i> <span>${s.label}</span></a></li>
             `).join('');
 
-            await loadDashboard();
+            // Charger les données
+            await loadDashboardData();
         });
 
-        async function loadDashboard() {
-            const contentDiv = document.getElementById('dynamicContent');
-            if (!contentDiv) return;
+        async function loadDashboardData() {
+            // Achats
+            const ordersSnap = await db.collection('orders').where('buyerId', '==', currentUser.uid).get();
+            let spent = 0;
+            ordersSnap.forEach(doc => spent += doc.data().amount || 0);
+            document.getElementById('totalPurchases').textContent = ordersSnap.size;
+            document.getElementById('totalSpent').textContent = spent + ' FCFA';
 
-            if (userData.role === 'creator') {
-                // Dashboard vendeur
-                const servicesSnap = await db.collection('services').where('creatorId', '==', currentUser.uid).get();
-                const ordersSnap = await db.collection('orders').where('sellerId', '==', currentUser.uid).get();
-                const followersSnap = await db.collection('follows').where('followingId', '==', currentUser.uid).get();
+            // Favoris
+            const favSnap = await db.collection('favorites').where('userId', '==', currentUser.uid).get();
+            document.getElementById('totalFavorites').textContent = favSnap.size;
 
-                let revenue = 0;
-                ordersSnap.forEach(doc => revenue += doc.data().amount || 0);
+            // Derniers achats
+            const recentOrders = await db.collection('orders')
+                .where('buyerId', '==', currentUser.uid)
+                .orderBy('createdAt', 'desc')
+                .limit(5)
+                .get();
 
-                let totalCartAdds = 0;
-                for (const doc of servicesSnap.docs) {
-                    const cartSnap = await db.collection('cart').where('serviceId', '==', doc.id).get();
-                    totalCartAdds += cartSnap.size;
-                }
-
-                let totalFavs = 0;
-                for (const doc of servicesSnap.docs) {
-                    const favSnap = await db.collection('favorites').where('serviceId', '==', doc.id).get();
-                    totalFavs += favSnap.size;
-                }
-
-                let html = `
-                    <div class="hero-section">
-                        <h1>Bienvenue sur votre espace vendeur, ${userData.name || 'cher partenaire'}!</h1>
-                        <p>Gérez vos services, suivez vos commandes et développez votre activité.</p>
-                    </div>
-                    <div class="stats-grid">
-                        <div class="stat-card featured">
-                            <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
-                            <div class="stat-details">
-                                <h3>Revenus totaux</h3>
-                                <p>${revenue} FCFA</p>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon"><i class="fas fa-shopping-cart"></i></div>
-                            <div class="stat-details">
-                                <h3>Commandes</h3>
-                                <p>${ordersSnap.size}</p>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon"><i class="fas fa-users"></i></div>
-                            <div class="stat-details">
-                                <h3>Abonnés</h3>
-                                <p>${followersSnap.size}</p>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon"><i class="fas fa-list"></i></div>
-                            <div class="stat-details">
-                                <h3>Services</h3>
-                                <p>${servicesSnap.size}</p>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon"><i class="fas fa-cart-plus"></i></div>
-                            <div class="stat-details">
-                                <h3>Ajouts panier</h3>
-                                <p>${totalCartAdds}</p>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon"><i class="fas fa-heart"></i></div>
-                            <div class="stat-details">
-                                <h3>Favoris</h3>
-                                <p>${totalFavs}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="orders-table">
-                        <h2>Dernières commandes</h2>
-                        <div id="recentOrdersList">Chargement...</div>
-                    </div>
-                `;
-                contentDiv.innerHTML = html;
-
-                // Récupérer les 5 dernières commandes
-                const recentOrders = await db.collection('orders')
-                    .where('sellerId', '==', currentUser.uid)
-                    .orderBy('createdAt', 'desc')
-                    .limit(5)
-                    .get();
-                const listDiv = document.getElementById('recentOrdersList');
-                if (recentOrders.empty) {
-                    listDiv.innerHTML = '<p>Aucune commande récente.</p>';
-                } else {
-                    let listHtml = '';
-                    recentOrders.forEach(doc => {
-                        const o = doc.data();
-                        const statusClass = o.status === 'completed' ? 'success' : o.status === 'pending' ? 'warning' : 'danger';
-                        listHtml += `<div class="activity-item">
-                            <span>Commande ${doc.id.slice(0,6)} - ${o.amount} FCFA</span>
-                            <span class="badge ${statusClass}">${o.status}</span>
-                        </div>`;
-                    });
-                    listDiv.innerHTML = listHtml;
-                }
+            const listDiv = document.getElementById('recentPurchasesList');
+            if (recentOrders.empty) {
+                listDiv.innerHTML = '<p>Aucun achat récent.</p>';
             } else {
-                // Dashboard acheteur
-                const ordersSnap = await db.collection('orders').where('buyerId', '==', currentUser.uid).get();
-                let spent = 0;
-                ordersSnap.forEach(doc => spent += doc.data().amount || 0);
-                const favSnap = await db.collection('favorites').where('userId', '==', currentUser.uid).get();
-
-                let html = `
-                    <div class="hero-section">
-                        <h1>Bienvenue, ${userData.name || 'cher client'}!</h1>
-                        <p>Explorez des milliers de services, suivez vos achats et gérez vos favoris.</p>
-                    </div>
-                    <div class="stats-grid">
-                        <div class="stat-card featured">
-                            <div class="stat-icon"><i class="fas fa-wallet"></i></div>
-                            <div class="stat-details">
-                                <h3>Votre solde</h3>
-                                <p>${userData.balance || 0} FCFA</p>
+                let html = '';
+                for (const doc of recentOrders.docs) {
+                    const o = doc.data();
+                    const serviceDoc = await db.collection('services').doc(o.serviceId).get();
+                    const serviceTitle = serviceDoc.exists ? serviceDoc.data().title : 'Service inconnu';
+                    const date = o.createdAt ? new Date(o.createdAt.toDate()).toLocaleDateString() : 'N/A';
+                    const statusClass = o.status === 'completed' ? 'success' : o.status === 'pending' ? 'warning' : 'danger';
+                    html += `
+                        <div class="activity-item">
+                            <div>
+                                <strong>${serviceTitle}</strong><br>
+                                <small>${date}</small>
                             </div>
-                            <button class="btn btn-success" onclick="openRechargeModal()" style="margin-left: auto;">Recharger</button>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon"><i class="fas fa-shopping-bag"></i></div>
-                            <div class="stat-details">
-                                <h3>Achats</h3>
-                                <p>${ordersSnap.size}</p>
+                            <div>
+                                <span class="badge ${statusClass}">${o.status}</span>
+                                <span style="font-weight:700; margin-left:10px;">${o.amount} FCFA</span>
                             </div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-icon"><i class="fas fa-clock"></i></div>
-                            <div class="stat-details">
-                                <h3>Dépenses</h3>
-                                <p>${spent} FCFA</p>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon"><i class="fas fa-heart"></i></div>
-                            <div class="stat-details">
-                                <h3>Favoris</h3>
-                                <p>${favSnap.size}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="orders-table">
-                        <h2>Derniers achats</h2>
-                        <div id="recentPurchasesList">Chargement...</div>
-                    </div>
-                `;
-                contentDiv.innerHTML = html;
-
-                const recentPurchases = await db.collection('orders')
-                    .where('buyerId', '==', currentUser.uid)
-                    .orderBy('createdAt', 'desc')
-                    .limit(5)
-                    .get();
-                const listDiv = document.getElementById('recentPurchasesList');
-                if (recentPurchases.empty) {
-                    listDiv.innerHTML = '<p>Aucun achat récent.</p>';
-                } else {
-                    let listHtml = '';
-                    recentPurchases.forEach(doc => {
-                        const o = doc.data();
-                        const statusClass = o.status === 'completed' ? 'success' : o.status === 'pending' ? 'warning' : 'danger';
-                        listHtml += `<div class="activity-item">
-                            <span>Achat ${doc.id.slice(0,6)} - ${o.amount} FCFA</span>
-                            <span class="badge ${statusClass}">${o.status}</span>
-                        </div>`;
-                    });
-                    listDiv.innerHTML = listHtml;
+                    `;
                 }
+                listDiv.innerHTML = html;
             }
         }
-
-        // Fonctions pour le modal de recharge
-        window.openRechargeModal = function() {
-            document.getElementById('rechargeModal').classList.add('active');
-        };
-        window.closeRechargeModal = function() {
-            document.getElementById('rechargeModal').classList.remove('active');
-        };
-        window.simulateRecharge = async function() {
-            const amount = parseFloat(document.getElementById('rechargeAmount').value);
-            if (isNaN(amount) || amount <= 0) {
-                showToast('Montant invalide', 'error');
-                return;
-            }
-            // Simuler une recharge
-            const newBalance = (userData.balance || 0) + amount;
-            await db.collection('users').doc(currentUser.uid).update({ balance: newBalance });
-            userData.balance = newBalance;
-            showToast(`Solde rechargé de ${amount} FCFA`, 'success');
-            closeRechargeModal();
-            // Recharger la page pour mettre à jour l'affichage
-            loadDashboard();
-        };
-
-        // Fonctions pour le modal de confirmation
-        window.showConfirm = function(message, callback) {
-            document.getElementById('confirmMessage').textContent = message;
-            confirmCallback = callback;
-            document.getElementById('confirmModal').classList.add('active');
-        };
-        window.closeConfirmModal = function() {
-            document.getElementById('confirmModal').classList.remove('active');
-            confirmCallback = null;
-        };
-        document.getElementById('confirmYes').addEventListener('click', () => {
-            if (confirmCallback) {
-                confirmCallback();
-            }
-            closeConfirmModal();
-        });
-
-        // Fonctions de déconnexion (déjà dans auth.js mais on les redéfinit pour les modals)
-        window.closeLogoutModal = closeLogoutModal;
     </script>
 </body>
 </html>

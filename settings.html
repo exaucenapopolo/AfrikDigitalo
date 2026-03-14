@@ -15,25 +15,14 @@
             <span>Afrik<span class="highlight">Digitalo</span></span>
         </div>
         <div class="header-user">
-            <span id="headerUserName">Utilisateur</span>
-            <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
-            <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
+            <button class="header-icon-btn" onclick="location.href='settings.html'"><i class="fas fa-cog"></i></button>
+            <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar" onclick="location.href='profile.html'">
         </div>
     </header>
 
     <div class="dashboard">
-        <aside class="sidebar" id="sidebar">
-            <nav>
-                <ul id="sidebarNav"></ul>
-            </nav>
-        </aside>
-
-        <main class="main-content" id="mainContent">
-            <div id="verificationBanner" class="verification-banner" style="display: none;">
-                <p><i class="fas fa-exclamation-triangle"></i> Votre adresse email n'est pas encore vérifiée.</p>
-                <button id="resendVerificationBtn">Renvoyer l'email</button>
-            </div>
-
+        <aside class="sidebar"></aside>
+        <main class="main-content">
             <div class="settings-group">
                 <h3>Notifications</h3>
                 <div class="setting-item">
@@ -93,18 +82,6 @@
         <ul id="mobileNavList"></ul>
     </nav>
 
-    <div class="modal" id="logoutModal">
-        <div class="modal-content">
-            <span class="modal-close" onclick="closeLogoutModal()">&times;</span>
-            <h3>Confirmation</h3>
-            <p>Êtes-vous sûr de vouloir vous déconnecter ?</p>
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button class="btn btn-primary" id="confirmLogout">Oui</button>
-                <button class="btn btn-secondary" onclick="closeLogoutModal()">Non</button>
-            </div>
-        </div>
-    </div>
-
     <div id="toast" class="toast"></div>
 
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -115,29 +92,6 @@
         document.addEventListener('DOMContentLoaded', async () => {
             await requireAuth();
             if (!userData) return;
-
-            const sections = userData.role === 'creator' ? [
-                { id: 'dashboard', url: 'dashboard.html', icon: 'fas fa-home', label: 'Accueil' },
-                { id: 'services', url: 'services.html', icon: 'fas fa-list', label: 'Mes services' },
-                { id: 'orders', url: 'orders.html', icon: 'fas fa-shopping-bag', label: 'Commandes' },
-                { id: 'followers', url: 'followers.html', icon: 'fas fa-users', label: 'Abonnés' },
-                { id: 'profile', url: 'profile.html', icon: 'fas fa-user', label: 'Profil' },
-                { id: 'settings', url: 'settings.html', icon: 'fas fa-cog', label: 'Paramètres' }
-            ] : [
-                { id: 'dashboard', url: 'dashboard.html', icon: 'fas fa-home', label: 'Accueil' },
-                { id: 'explore', url: 'explore.html', icon: 'fas fa-search', label: 'Explorer' },
-                { id: 'cart', url: 'cart.html', icon: 'fas fa-shopping-cart', label: 'Panier' },
-                { id: 'orders', url: 'orders.html', icon: 'fas fa-history', label: 'Mes achats' },
-                { id: 'favorites', url: 'favorites.html', icon: 'fas fa-heart', label: 'Favoris' },
-                { id: 'profile', url: 'profile.html', icon: 'fas fa-user', label: 'Profil' },
-                { id: 'settings', url: 'settings.html', icon: 'fas fa-cog', label: 'Paramètres' }
-            ];
-            document.getElementById('sidebarNav').innerHTML = sections.map(s => `
-                <li><a href="${s.url}" class="${s.id === 'settings' ? 'active' : ''}"><i class="${s.icon}"></i> ${s.label}</a></li>
-            `).join('');
-            document.getElementById('mobileNavList').innerHTML = sections.map(s => `
-                <li><a href="${s.url}" class="${s.id === 'settings' ? 'active' : ''}"><i class="${s.icon}"></i> <span>${s.label}</span></a></li>
-            `).join('');
 
             if (userData.role === 'creator') {
                 document.getElementById('creatorSettings').style.display = 'block';
@@ -153,6 +107,22 @@
                     document.getElementById('customCommission').value = userData.settings.customCommission || 10;
                 }
             }
+
+            const sections = userData.role === 'creator' ? [
+                { id: 'dashboard', url: 'creator-dashboard.html', icon: 'fas fa-home', label: 'Accueil' },
+                { id: 'services', url: 'services.html', icon: 'fas fa-list', label: 'Services' },
+                { id: 'orders', url: 'creator-orders.html', icon: 'fas fa-shopping-bag', label: 'Commandes' },
+                { id: 'followers', url: 'followers.html', icon: 'fas fa-users', label: 'Abonnés' }
+            ] : [
+                { id: 'dashboard', url: 'dashboard.html', icon: 'fas fa-home', label: 'Accueil' },
+                { id: 'explore', url: 'explore.html', icon: 'fas fa-search', label: 'Explorer' },
+                { id: 'cart', url: 'cart.html', icon: 'fas fa-shopping-cart', label: 'Panier' },
+                { id: 'orders', url: 'orders.html', icon: 'fas fa-history', label: 'Achats' },
+                { id: 'favorites', url: 'favorites.html', icon: 'fas fa-heart', label: 'Favoris' }
+            ];
+            document.getElementById('mobileNavList').innerHTML = sections.map(s => `
+                <li><a href="${s.url}" class=""><i class="${s.icon}"></i> <span>${s.label}</span></a></li>
+            `).join('');
         });
 
         window.saveSettings = async function() {

@@ -7,6 +7,78 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <style>
+        .cart-item {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: var(--shadow-sm);
+            align-items: center;
+        }
+        .cart-item img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .cart-item-details {
+            flex: 1;
+        }
+        .cart-item-details h3 {
+            color: var(--secondary);
+            margin-bottom: 5px;
+        }
+        .cart-item-details p {
+            color: #777;
+        }
+        .cart-item-price {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
+        .cart-item-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .quantity-control button {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 1px solid var(--gray-light);
+            background: white;
+            cursor: pointer;
+        }
+        .cart-summary {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: var(--shadow-sm);
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .cart-total {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--secondary);
+        }
+        .cart-balance {
+            font-size: 1.2rem;
+            color: var(--accent-green);
+        }
+    </style>
 </head>
 <body>
     <header class="main-header">
@@ -15,25 +87,14 @@
             <span>Afrik<span class="highlight">Digitalo</span></span>
         </div>
         <div class="header-user">
-            <span id="headerUserName">Utilisateur</span>
-            <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
-            <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
+            <button class="header-icon-btn" onclick="location.href='settings.html'"><i class="fas fa-cog"></i></button>
+            <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar" onclick="location.href='profile.html'">
         </div>
     </header>
 
     <div class="dashboard">
-        <aside class="sidebar" id="sidebar">
-            <nav>
-                <ul id="sidebarNav"></ul>
-            </nav>
-        </aside>
-
-        <main class="main-content" id="mainContent">
-            <div id="verificationBanner" class="verification-banner" style="display: none;">
-                <p><i class="fas fa-exclamation-triangle"></i> Votre adresse email n'est pas encore vérifiée.</p>
-                <button id="resendVerificationBtn">Renvoyer l'email</button>
-            </div>
-
+        <aside class="sidebar"></aside>
+        <main class="main-content">
             <div id="cartContent">Chargement...</div>
         </main>
     </div>
@@ -42,15 +103,11 @@
         <ul id="mobileNavList"></ul>
     </nav>
 
-    <!-- Modal de confirmation -->
-    <div class="modal" id="confirmModal">
+    <!-- Modal détails service -->
+    <div class="modal" id="serviceDetailModal">
         <div class="modal-content">
-            <h3>Confirmation</h3>
-            <p id="confirmMessage">Êtes-vous sûr ?</p>
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button class="btn btn-primary" id="confirmYes">Oui</button>
-                <button class="btn btn-secondary" onclick="closeConfirmModal()">Non</button>
-            </div>
+            <span class="modal-close" onclick="closeServiceModal()">&times;</span>
+            <div id="serviceDetailContent"></div>
         </div>
     </div>
 
@@ -73,14 +130,12 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="auth.js"></script>
     <script>
-        let confirmCallback = null;
-
         document.addEventListener('DOMContentLoaded', async () => {
             await requireAuth();
             if (!userData) return;
 
             if (userData.role !== 'buyer') {
-                window.location.href = 'dashboard.html';
+                window.location.href = 'creator-dashboard.html';
                 return;
             }
 
@@ -89,13 +144,8 @@
                 { id: 'explore', url: 'explore.html', icon: 'fas fa-search', label: 'Explorer' },
                 { id: 'cart', url: 'cart.html', icon: 'fas fa-shopping-cart', label: 'Panier' },
                 { id: 'orders', url: 'orders.html', icon: 'fas fa-history', label: 'Mes achats' },
-                { id: 'favorites', url: 'favorites.html', icon: 'fas fa-heart', label: 'Favoris' },
-                { id: 'profile', url: 'profile.html', icon: 'fas fa-user', label: 'Profil' },
-                { id: 'settings', url: 'settings.html', icon: 'fas fa-cog', label: 'Paramètres' }
+                { id: 'favorites', url: 'favorites.html', icon: 'fas fa-heart', label: 'Favoris' }
             ];
-            document.getElementById('sidebarNav').innerHTML = sections.map(s => `
-                <li><a href="${s.url}" class="${s.id === 'cart' ? 'active' : ''}"><i class="${s.icon}"></i> ${s.label}</a></li>
-            `).join('');
             document.getElementById('mobileNavList').innerHTML = sections.map(s => `
                 <li><a href="${s.url}" class="${s.id === 'cart' ? 'active' : ''}"><i class="${s.icon}"></i> <span>${s.label}</span></a></li>
             `).join('');
@@ -124,48 +174,69 @@
                         title: s.title, 
                         price: s.price, 
                         quantity: item.quantity || 1,
-                        images: s.images || []
+                        images: s.images || [],
+                        description: s.description
                     });
                     total += s.price * (item.quantity || 1);
                 }
             }
 
-            let html = '<div class="orders-table"><h2>Votre panier</h2><table><thead><tr><th>Service</th><th>Prix unitaire</th><th>Quantité</th><th>Total</th><th>Action</th></tr></thead><tbody>';
+            let html = '<h2>Votre panier</h2>';
             items.forEach(item => {
-                const imageHtml = item.images.length > 0 ? `<img src="${item.images[0]}" style="width:50px; height:50px; object-fit:cover; border-radius:5px; margin-right:10px; cursor:pointer;" onclick="window.open('${item.images[0]}')">` : '';
-                html += `<tr>
-                    <td>${imageHtml} ${item.title}</td>
-                    <td>${item.price} FCFA</td>
-                    <td><input type="number" min="1" value="${item.quantity}" style="width:60px;" onchange="updateQuantity('${item.id}', this.value)"></td>
-                    <td>${item.price * item.quantity} FCFA</td>
-                    <td><button class="btn-delete" onclick="confirmRemoveFromCart('${item.id}')"><i class="fas fa-trash"></i></button></td>
-                </tr>`;
+                const imageHtml = item.images.length > 0 ? `<img src="${item.images[0]}" onclick="showServiceDetails('${item.serviceId}')">` : '';
+                html += `
+                    <div class="cart-item">
+                        ${imageHtml}
+                        <div class="cart-item-details">
+                            <h3>${item.title}</h3>
+                            <p>${item.description.substring(0, 100)}...</p>
+                            <div class="cart-item-price">${item.price} FCFA</div>
+                        </div>
+                        <div class="cart-item-actions">
+                            <div class="quantity-control">
+                                <button onclick="updateQuantity('${item.id}', -1)">-</button>
+                                <span>${item.quantity}</span>
+                                <button onclick="updateQuantity('${item.id}', 1)">+</button>
+                            </div>
+                            <button class="btn btn-danger" onclick="removeFromCart('${item.id}')"><i class="fas fa-trash"></i></button>
+                            <button class="btn btn-warning" onclick="addToFavorites('${item.serviceId}')"><i class="fas fa-heart"></i></button>
+                        </div>
+                    </div>
+                `;
             });
-            html += `</tbody></table><p><strong>Total : ${total} FCFA</strong></p>`;
-            html += `<p><strong>Votre solde : ${userData.balance || 0} FCFA</strong></p>`;
-            if ((userData.balance || 0) >= total) {
-                html += `<button class="btn-success" onclick="checkout()">Passer la commande</button>`;
-            } else {
-                html += `<p style="color:red;">Solde insuffisant. <a href="dashboard.html" style="color:var(--primary);">Recharger</a></p>`;
-            }
-            html += '</div>';
+
+            const balance = userData.balance || 0;
+            html += `
+                <div class="cart-summary">
+                    <div>
+                        <span class="cart-total">Total: ${total} FCFA</span><br>
+                        <span class="cart-balance">Votre solde: ${balance} FCFA</span>
+                    </div>
+                    ${balance >= total ? 
+                        `<button class="btn btn-success" onclick="checkout()">Passer la commande</button>` : 
+                        `<p style="color:red;">Solde insuffisant. <a href="recharge.html">Recharger</a></p>`
+                    }
+                </div>
+            `;
             contentDiv.innerHTML = html;
         }
 
-        window.updateQuantity = async function(cartId, newQuantity) {
-            const q = parseInt(newQuantity);
-            if (q < 1) return;
-            await db.collection('cart').doc(cartId).update({ quantity: q });
-            showToast('Quantité mise à jour', 'success');
+        window.updateQuantity = async function(cartId, delta) {
+            const docRef = db.collection('cart').doc(cartId);
+            const doc = await docRef.get();
+            if (!doc.exists) return;
+            const newQty = (doc.data().quantity || 1) + delta;
+            if (newQty < 1) return;
+            await docRef.update({ quantity: newQty });
             loadCart();
         };
 
-        window.confirmRemoveFromCart = function(cartId) {
-            showConfirm('Voulez-vous retirer cet article du panier ?', async () => {
+        window.removeFromCart = async function(cartId) {
+            if (confirm('Retirer cet article du panier ?')) {
                 await db.collection('cart').doc(cartId).delete();
-                showToast('Article retiré', 'success');
+                showToast('Retiré du panier', 'success');
                 loadCart();
-            });
+            }
         };
 
         window.checkout = async function() {
@@ -184,8 +255,7 @@
                     buyerId: currentUser.uid,
                     sellerId: service.creatorId,
                     serviceId: item.serviceId,
-                    amount: service.price,
-                    quantity: item.quantity || 1,
+                    amount: service.price * (item.quantity || 1),
                     status: 'pending',
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
@@ -196,41 +266,82 @@
                 return;
             }
 
-            showConfirm('Confirmez-vous l\'achat de ces articles ?', async () => {
-                const batch = db.batch();
-                const userRef = db.collection('users').doc(currentUser.uid);
-                batch.update(userRef, { balance: firebase.firestore.FieldValue.increment(-total) });
+            // Appliquer commission 10% pour l'entreprise
+            const companyCommission = total * 0.1;
+            const sellerAmount = total - companyCommission;
 
-                for (const order of orders) {
-                    const orderRef = db.collection('orders').doc();
-                    batch.set(orderRef, order);
-                }
-                cartSnap.docs.forEach(doc => batch.delete(doc.ref));
+            const batch = db.batch();
+            // Déduire le solde de l'acheteur
+            const userRef = db.collection('users').doc(currentUser.uid);
+            batch.update(userRef, { balance: firebase.firestore.FieldValue.increment(-total) });
 
-                await batch.commit();
-
-                userData.balance -= total;
-                showToast('Commande passée avec succès !', 'success');
-                loadCart();
-            });
-        };
-
-        // Modal de confirmation
-        window.showConfirm = function(message, callback) {
-            document.getElementById('confirmMessage').textContent = message;
-            confirmCallback = callback;
-            document.getElementById('confirmModal').classList.add('active');
-        };
-        window.closeConfirmModal = function() {
-            document.getElementById('confirmModal').classList.remove('active');
-            confirmCallback = null;
-        };
-        document.getElementById('confirmYes').addEventListener('click', () => {
-            if (confirmCallback) {
-                confirmCallback();
+            // Ajouter aux revenus du vendeur (à faire dans le document du vendeur)
+            // On peut ajouter un champ balance au vendeur aussi
+            for (const order of orders) {
+                const sellerRef = db.collection('users').doc(order.sellerId);
+                batch.update(sellerRef, { balance: firebase.firestore.FieldValue.increment(order.amount - (order.amount * 0.1)) }); // 90% au vendeur
             }
-            closeConfirmModal();
-        });
+
+            // Créer les commandes et supprimer le panier
+            for (const order of orders) {
+                const orderRef = db.collection('orders').doc();
+                batch.set(orderRef, order);
+            }
+            cartSnap.docs.forEach(doc => batch.delete(doc.ref));
+
+            await batch.commit();
+
+            // Mettre à jour le solde local
+            userData.balance -= total;
+            showToast('Commande passée avec succès !', 'success');
+            loadCart();
+        };
+
+        window.showServiceDetails = async function(serviceId) {
+            const doc = await db.collection('services').doc(serviceId).get();
+            if (!doc.exists) return;
+            const s = doc.data();
+            const creatorDoc = await db.collection('users').doc(s.creatorId).get();
+            const creator = creatorDoc.data();
+
+            let imagesHtml = '';
+            if (s.images && s.images.length) {
+                imagesHtml = '<div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px;">';
+                s.images.forEach(url => {
+                    imagesHtml += `<img src="${url}" style="width:200px; height:150px; object-fit:cover; border-radius:5px; cursor:pointer;" onclick="showImageModal('${url}')">`;
+                });
+                imagesHtml += '</div>';
+            }
+
+            document.getElementById('serviceDetailContent').innerHTML = `
+                <h3>${s.title}</h3>
+                ${imagesHtml}
+                <p><strong>Description:</strong> ${s.description}</p>
+                <p><strong>Prix:</strong> ${s.price} FCFA</p>
+                <p><strong>Catégorie:</strong> ${s.category}</p>
+                <p><strong>Délai de livraison:</strong> ${s.deliveryDays} jours</p>
+                <p><strong>Vendeur:</strong> <a href="vendor-profile.html?id=${s.creatorId}" style="color: var(--primary);">${creator ? creator.name : 'Inconnu'}</a></p>
+            `;
+            document.getElementById('serviceDetailModal').classList.add('active');
+        };
+
+        window.closeServiceModal = function() {
+            document.getElementById('serviceDetailModal').classList.remove('active');
+        };
+
+        window.addToFavorites = async function(serviceId) {
+            const existing = await db.collection('favorites').where('userId', '==', currentUser.uid).where('serviceId', '==', serviceId).get();
+            if (!existing.empty) {
+                showToast('Déjà dans les favoris', 'info');
+                return;
+            }
+            await db.collection('favorites').add({
+                userId: currentUser.uid,
+                serviceId: serviceId,
+                addedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            showToast('Ajouté aux favoris', 'success');
+        };
     </script>
 </body>
 </html>

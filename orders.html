@@ -3,10 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Commandes - AfrikDigitalo</title>
+    <title>Mes achats - AfrikDigitalo</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <style>
+        .order-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .order-info h3 {
+            margin-bottom: 5px;
+            color: var(--secondary);
+        }
+        .order-meta {
+            display: flex;
+            gap: 20px;
+            color: #777;
+        }
+        .order-status {
+            font-weight: 600;
+        }
+    </style>
 </head>
 <body>
     <header class="main-header">
@@ -15,44 +40,28 @@
             <span>Afrik<span class="highlight">Digitalo</span></span>
         </div>
         <div class="header-user">
-            <span id="headerUserName">Utilisateur</span>
-            <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar">
-            <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
+            <button class="header-icon-btn" onclick="location.href='settings.html'"><i class="fas fa-cog"></i></button>
+            <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar" onclick="location.href='profile.html'">
         </div>
     </header>
 
     <div class="dashboard">
-        <aside class="sidebar" id="sidebar">
-            <nav>
-                <ul id="sidebarNav"></ul>
-            </nav>
-        </aside>
-
-        <main class="main-content" id="mainContent">
-            <div id="verificationBanner" class="verification-banner" style="display: none;">
-                <p><i class="fas fa-exclamation-triangle"></i> Votre adresse email n'est pas encore vérifiée.</p>
-                <button id="resendVerificationBtn">Renvoyer l'email</button>
-            </div>
-
+        <aside class="sidebar"></aside>
+        <main class="main-content">
+            <h2>Mes achats</h2>
             <div id="ordersList">Chargement...</div>
+
+            <!-- Suggestions de produits similaires -->
+            <div style="margin-top: 40px;">
+                <h3>Vous pourriez aussi aimer</h3>
+                <div id="suggestions" class="services-grid">Chargement...</div>
+            </div>
         </main>
     </div>
 
     <nav class="mobile-nav" id="mobileNav">
         <ul id="mobileNavList"></ul>
     </nav>
-
-    <!-- Modal de confirmation -->
-    <div class="modal" id="confirmModal">
-        <div class="modal-content">
-            <h3>Confirmation</h3>
-            <p id="confirmMessage">Êtes-vous sûr ?</p>
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button class="btn btn-primary" id="confirmYes">Oui</button>
-                <button class="btn btn-secondary" onclick="closeConfirmModal()">Non</button>
-            </div>
-        </div>
-    </div>
 
     <div class="modal" id="logoutModal">
         <div class="modal-content">
@@ -73,127 +82,116 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="auth.js"></script>
     <script>
-        let confirmCallback = null;
-
         document.addEventListener('DOMContentLoaded', async () => {
             await requireAuth();
             if (!userData) return;
 
-            const sections = userData.role === 'creator' ? [
-                { id: 'dashboard', url: 'dashboard.html', icon: 'fas fa-home', label: 'Accueil' },
-                { id: 'services', url: 'services.html', icon: 'fas fa-list', label: 'Mes services' },
-                { id: 'orders', url: 'orders.html', icon: 'fas fa-shopping-bag', label: 'Commandes' },
-                { id: 'followers', url: 'followers.html', icon: 'fas fa-users', label: 'Abonnés' },
-                { id: 'profile', url: 'profile.html', icon: 'fas fa-user', label: 'Profil' },
-                { id: 'settings', url: 'settings.html', icon: 'fas fa-cog', label: 'Paramètres' }
-            ] : [
+            if (userData.role !== 'buyer') {
+                window.location.href = 'creator-dashboard.html';
+                return;
+            }
+
+            const sections = [
                 { id: 'dashboard', url: 'dashboard.html', icon: 'fas fa-home', label: 'Accueil' },
                 { id: 'explore', url: 'explore.html', icon: 'fas fa-search', label: 'Explorer' },
                 { id: 'cart', url: 'cart.html', icon: 'fas fa-shopping-cart', label: 'Panier' },
                 { id: 'orders', url: 'orders.html', icon: 'fas fa-history', label: 'Mes achats' },
-                { id: 'favorites', url: 'favorites.html', icon: 'fas fa-heart', label: 'Favoris' },
-                { id: 'profile', url: 'profile.html', icon: 'fas fa-user', label: 'Profil' },
-                { id: 'settings', url: 'settings.html', icon: 'fas fa-cog', label: 'Paramètres' }
+                { id: 'favorites', url: 'favorites.html', icon: 'fas fa-heart', label: 'Favoris' }
             ];
-            document.getElementById('sidebarNav').innerHTML = sections.map(s => `
-                <li><a href="${s.url}" class="${s.id === 'orders' ? 'active' : ''}"><i class="${s.icon}"></i> ${s.label}</a></li>
-            `).join('');
             document.getElementById('mobileNavList').innerHTML = sections.map(s => `
                 <li><a href="${s.url}" class="${s.id === 'orders' ? 'active' : ''}"><i class="${s.icon}"></i> <span>${s.label}</span></a></li>
             `).join('');
 
             await loadOrders();
+            await loadSuggestions();
         });
 
         async function loadOrders() {
             const listDiv = document.getElementById('ordersList');
-            try {
-                let orders;
-                if (userData.role === 'creator') {
-                    orders = await db.collection('orders')
-                        .where('sellerId', '==', currentUser.uid)
-                        .orderBy('createdAt', 'desc')
-                        .get();
-                } else {
-                    orders = await db.collection('orders')
-                        .where('buyerId', '==', currentUser.uid)
-                        .orderBy('createdAt', 'desc')
-                        .get();
-                }
-                
-                if (orders.empty) {
-                    listDiv.innerHTML = '<p>Aucune commande.</p>';
-                    return;
-                }
-                
-                let html = '<div class="orders-table"><h2>Commandes</h2><table><thead><tr><th>ID</th><th>Service</th><th>Montant</th><th>Quantité</th><th>Statut</th><th>Date</th><th>Action</th></tr></thead><tbody>';
-                
-                for (const doc of orders.docs) {
-                    const o = doc.data();
-                    const serviceDoc = await db.collection('services').doc(o.serviceId).get();
-                    const serviceTitle = serviceDoc.exists ? serviceDoc.data().title : 'Service inconnu';
-                    const date = o.createdAt ? new Date(o.createdAt.toDate()).toLocaleDateString() : 'N/A';
-                    let actionButton = '';
-                    if (userData.role === 'creator' && o.status === 'pending') {
-                        actionButton = `
-                            <button class="btn-success" onclick="markAsCompleted('${doc.id}')">Terminer</button>
-                            <button class="btn-danger" onclick="rejectOrder('${doc.id}', '${o.buyerId}', ${o.amount})">Rejeter</button>
-                        `;
-                    }
-                    html += `<tr>
-                        <td>${doc.id.slice(0, 6)}...</td>
-                        <td>${serviceTitle}</td>
-                        <td>${o.amount} FCFA</td>
-                        <td>${o.quantity || 1}</td>
-                        <td><span class="badge ${o.status === 'completed' ? 'success' : o.status === 'pending' ? 'warning' : 'danger'}">${o.status}</span></td>
-                        <td>${date}</td>
-                        <td>${actionButton}</td>
-                    </tr>`;
-                }
-                html += '</tbody></table></div>';
-                listDiv.innerHTML = html;
-            } catch (error) {
-                console.error("Erreur chargement commandes:", error);
-                listDiv.innerHTML = `<p style="color:red;">Erreur de chargement: ${error.message}</p>`;
+            const orders = await db.collection('orders')
+                .where('buyerId', '==', currentUser.uid)
+                .orderBy('createdAt', 'desc')
+                .get();
+
+            if (orders.empty) {
+                listDiv.innerHTML = '<p>Aucune commande.</p>';
+                return;
             }
+
+            let html = '';
+            for (const doc of orders.docs) {
+                const o = doc.data();
+                const serviceDoc = await db.collection('services').doc(o.serviceId).get();
+                const serviceTitle = serviceDoc.exists ? serviceDoc.data().title : 'Service inconnu';
+                const date = o.createdAt ? new Date(o.createdAt.toDate()).toLocaleDateString() : 'N/A';
+                const statusClass = o.status === 'completed' ? 'success' : o.status === 'pending' ? 'warning' : 'danger';
+                html += `
+                    <div class="order-card">
+                        <div class="order-info">
+                            <h3>${serviceTitle}</h3>
+                            <div class="order-meta">
+                                <span><i class="fas fa-calendar"></i> ${date}</span>
+                                <span><i class="fas fa-tag"></i> ${o.amount} FCFA</span>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="badge ${statusClass}">${o.status}</span>
+                        </div>
+                    </div>
+                `;
+            }
+            listDiv.innerHTML = html;
         }
 
-        window.markAsCompleted = async function(orderId) {
-            await db.collection('orders').doc(orderId).update({ status: 'completed' });
-            showToast('Commande marquée comme terminée', 'success');
-            loadOrders();
-        };
-
-        window.rejectOrder = async function(orderId, buyerId, amount) {
-            showConfirm('Voulez-vous rejeter cette commande ? L\'acheteur sera remboursé.', async () => {
-                const batch = db.batch();
-                // Rembourser l'acheteur
-                const buyerRef = db.collection('users').doc(buyerId);
-                batch.update(buyerRef, { balance: firebase.firestore.FieldValue.increment(amount) });
-                // Marquer la commande comme rejetée
-                batch.update(db.collection('orders').doc(orderId), { status: 'rejected' });
-                await batch.commit();
-                showToast('Commande rejetée et remboursement effectué', 'success');
-                loadOrders();
-            });
-        };
-
-        // Modal de confirmation
-        window.showConfirm = function(message, callback) {
-            document.getElementById('confirmMessage').textContent = message;
-            confirmCallback = callback;
-            document.getElementById('confirmModal').classList.add('active');
-        };
-        window.closeConfirmModal = function() {
-            document.getElementById('confirmModal').classList.remove('active');
-            confirmCallback = null;
-        };
-        document.getElementById('confirmYes').addEventListener('click', () => {
-            if (confirmCallback) {
-                confirmCallback();
+        async function loadSuggestions() {
+            // Récupérer les catégories des achats de l'utilisateur
+            const orders = await db.collection('orders').where('buyerId', '==', currentUser.uid).get();
+            const categories = new Set();
+            for (const doc of orders.docs) {
+                const o = doc.data();
+                const serviceDoc = await db.collection('services').doc(o.serviceId).get();
+                if (serviceDoc.exists) {
+                    categories.add(serviceDoc.data().category);
+                }
             }
-            closeConfirmModal();
-        });
+
+            if (categories.size === 0) {
+                document.getElementById('suggestions').innerHTML = '<p>Explorez d\'autres services</p>';
+                return;
+            }
+
+            // Chercher des services dans ces catégories, sauf ceux déjà achetés
+            const services = await db.collection('services').where('category', 'in', Array.from(categories)).limit(4).get();
+            let html = '';
+            services.forEach(doc => {
+                const s = doc.data();
+                html += `
+                    <div class="service-card">
+                        ${s.images && s.images[0] ? `<img src="${s.images[0]}" style="width:100%; height:150px; object-fit:cover;">` : ''}
+                        <h3>${s.title}</h3>
+                        <p>${s.description.substring(0,60)}...</p>
+                        <div class="service-price">${s.price} FCFA</div>
+                        <button class="btn btn-success" onclick="addToCart('${doc.id}')">Ajouter au panier</button>
+                    </div>
+                `;
+            });
+            document.getElementById('suggestions').innerHTML = html || '<p>Découvrez de nouveaux services</p>';
+        }
+
+        window.addToCart = async function(serviceId) {
+            const existing = await db.collection('cart').where('userId', '==', currentUser.uid).where('serviceId', '==', serviceId).get();
+            if (!existing.empty) {
+                showToast('Déjà dans le panier', 'info');
+                return;
+            }
+            await db.collection('cart').add({
+                userId: currentUser.uid,
+                serviceId: serviceId,
+                quantity: 1,
+                addedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            showToast('Ajouté au panier', 'success');
+        };
     </script>
 </body>
 </html>

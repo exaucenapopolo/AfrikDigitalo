@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Recharger mon solde - AfrikDigitalo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .recharge-container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: var(--shadow-md);
+        }
+        .recharge-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .recharge-header i {
+            font-size: 3rem;
+            color: var(--accent-green);
+            margin-bottom: 10px;
+        }
+        .payment-methods {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .payment-method {
+            border: 2px solid var(--gray-light);
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+            flex: 1;
+        }
+        .payment-method:hover {
+            border-color: var(--accent-green);
+            background: #f0fff0;
+        }
+        .payment-method.selected {
+            border-color: var(--accent-green);
+            background: #e8f5e8;
+        }
+        .payment-method i {
+            font-size: 2rem;
+            color: var(--accent-green);
+        }
+    </style>
+</head>
+<body>
+    <header class="main-header">
+        <div class="logo">
+            <img src="https://raw.githubusercontent.com/exaucenapopolo/AfrikDigitalo/refs/heads/main/Photo/ezgif-693a681e148aad8a.gif" alt="AfrikDigitalo">
+            <span>Afrik<span class="highlight">Digitalo</span></span>
+        </div>
+        <div class="header-user">
+            <button class="header-icon-btn" onclick="location.href='settings.html'"><i class="fas fa-cog"></i></button>
+            <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar" onclick="location.href='profile.html'">
+        </div>
+    </header>
+
+    <div class="dashboard">
+        <aside class="sidebar"></aside>
+        <main class="main-content">
+            <div class="recharge-container">
+                <div class="recharge-header">
+                    <i class="fas fa-wallet"></i>
+                    <h2>Recharger mon solde</h2>
+                    <p>Solde actuel: <strong id="currentBalance">0 FCFA</strong></p>
+                </div>
+
+                <form id="rechargeForm">
+                    <div class="form-group">
+                        <label>Pays</label>
+                        <select id="country" required>
+                            <option value="">Sélectionnez votre pays</option>
+                            <option value="CM">Cameroun</option>
+                            <option value="CI">Côte d'Ivoire</option>
+                            <option value="SN">Sénégal</option>
+                            <option value="ML">Mali</option>
+                            <option value="BF">Burkina Faso</option>
+                            <option value="TG">Togo</option>
+                            <option value="BJ">Bénin</option>
+                            <option value="NE">Niger</option>
+                            <option value="MR">Mauritanie</option>
+                            <option value="GN">Guinée</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Montant (FCFA)</label>
+                        <input type="number" id="amount" min="100" step="100" value="1000" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Méthode de paiement</label>
+                        <div class="payment-methods">
+                            <div class="payment-method" onclick="selectMethod('om')">
+                                <i class="fas fa-mobile-alt"></i>
+                                <p>Orange Money</p>
+                            </div>
+                            <div class="payment-method" onclick="selectMethod('momo')">
+                                <i class="fas fa-mobile-alt"></i>
+                                <p>MTN MoMo</p>
+                            </div>
+                            <div class="payment-method" onclick="selectMethod('card')">
+                                <i class="fas fa-credit-card"></i>
+                                <p>Carte bancaire</p>
+                            </div>
+                        </div>
+                        <input type="hidden" id="paymentMethod" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Numéro de téléphone</label>
+                        <input type="tel" id="phone" placeholder="6XXXXXXXX" required>
+                    </div>
+
+                    <button type="submit" class="btn-save">Recharger maintenant</button>
+                </form>
+
+                <p style="text-align:center; margin-top:20px; color:#777;">Simulation: Le solde sera crédité immédiatement</p>
+            </div>
+        </main>
+    </div>
+
+    <nav class="mobile-nav" id="mobileNav">
+        <ul id="mobileNavList"></ul>
+    </nav>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await requireAuth();
+            if (!userData) return;
+
+            document.getElementById('currentBalance').textContent = (userData.balance || 0) + ' FCFA';
+
+            // Navigation mobile
+            const sections = [
+                { id: 'dashboard', url: 'dashboard.html', icon: 'fas fa-home', label: 'Accueil' },
+                { id: 'explore', url: 'explore.html', icon: 'fas fa-search', label: 'Explorer' },
+                { id: 'cart', url: 'cart.html', icon: 'fas fa-shopping-cart', label: 'Panier' },
+                { id: 'orders', url: 'orders.html', icon: 'fas fa-history', label: 'Mes achats' },
+                { id: 'favorites', url: 'favorites.html', icon: 'fas fa-heart', label: 'Favoris' }
+            ];
+            document.getElementById('mobileNavList').innerHTML = sections.map(s => `
+                <li><a href="${s.url}" class=""><i class="${s.icon}"></i> <span>${s.label}</span></a></li>
+            `).join('');
+        });
+
+        window.selectMethod = function(method) {
+            document.querySelectorAll('.payment-method').forEach(el => el.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+            document.getElementById('paymentMethod').value = method;
+        };
+
+        document.getElementById('rechargeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const country = document.getElementById('country').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const method = document.getElementById('paymentMethod').value;
+            const phone = document.getElementById('phone').value;
+
+            if (!country || !amount || !method || !phone) {
+                showToast('Veuillez remplir tous les champs', 'error');
+                return;
+            }
+
+            // Simulation de paiement
+            showToast('Traitement du paiement...', 'info');
+            setTimeout(async () => {
+                // Mettre à jour le solde dans Firestore
+                const userRef = db.collection('users').doc(currentUser.uid);
+                await userRef.update({
+                    balance: firebase.firestore.FieldValue.increment(amount)
+                });
+                userData.balance += amount;
+                showToast(`Rechargement de ${amount} FCFA réussi !`, 'success');
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 2000);
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
