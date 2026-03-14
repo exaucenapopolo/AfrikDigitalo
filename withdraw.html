@@ -3,25 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Retirer mes gains - AfrikDigitalo</title>
+    <title>Retrait - AfrikDigitalo</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <style>
-        .withdraw-container {
+        .withdraw-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
             max-width: 500px;
             margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: var(--shadow-md);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .withdraw-card h2 {
+            text-align: center;
+            color: var(--secondary);
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--secondary);
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--gray-light);
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+        .btn-withdraw {
+            background: linear-gradient(135deg, var(--accent-green), #2ECC71);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: 600;
+            width: 100%;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-withdraw:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(39,174,96,0.3);
         }
     </style>
 </head>
 <body>
     <header class="main-header">
         <div class="logo">
-            <img src="https://raw.githubusercontent.com/exaucenapopolo/AfrikDigitalo/refs/heads/main/Photo/ezgif-693a681e148aad8a.gif" alt="AfrikDigitalo">
+            <img src="https://raw.githubusercontent.com/exaucenapopolo/AfrikDigitalo/refs/heads/main/Photo/ezgif-693a681e148aad8a.gif" alt="AfrikDigitalo" style="height: 40px;">
             <span>Afrik<span class="highlight">Digitalo</span></span>
         </div>
         <div class="header-user">
@@ -31,37 +68,31 @@
     </header>
 
     <div class="dashboard">
-        <aside class="sidebar"></aside>
-        <main class="main-content">
-            <div class="withdraw-container">
-                <h2>Retirer mes gains</h2>
-                <p>Solde disponible: <strong id="currentBalance">0 FCFA</strong></p>
-
+        <main class="main-content" id="mainContent">
+            <div class="withdraw-card">
+                <h2>Retirer vos gains</h2>
                 <form id="withdrawForm">
                     <div class="form-group">
-                        <label>Montant à retirer (FCFA)</label>
-                        <input type="number" id="amount" min="1000" step="1000" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Méthode de retrait</label>
-                        <select id="method" required>
-                            <option value="">Choisissez</option>
-                            <option value="om">Orange Money</option>
-                            <option value="momo">MTN MoMo</option>
-                            <option value="bank">Virement bancaire</option>
+                        <label>Pays</label>
+                        <select id="country" required>
+                            <option value="">Sélectionnez</option>
+                            <option value="SN">Sénégal</option>
+                            <option value="CI">Côte d'Ivoire</option>
+                            <option value="CM">Cameroun</option>
+                            <option value="ML">Mali</option>
+                            <option value="BF">Burkina Faso</option>
                         </select>
                     </div>
-
                     <div class="form-group">
-                        <label>Numéro de téléphone / RIB</label>
-                        <input type="text" id="account" required>
+                        <label>Montant à retirer (FCFA)</label>
+                        <input type="number" id="amount" min="100" step="100" value="1000" required>
                     </div>
-
-                    <button type="submit" class="btn-save">Demander le retrait</button>
+                    <div class="form-group">
+                        <label>Numéro de téléphone</label>
+                        <input type="tel" id="phone" placeholder="77 123 45 67" required>
+                    </div>
+                    <button type="submit" class="btn-withdraw">Simuler le retrait</button>
                 </form>
-
-                <p style="text-align:center; margin-top:20px; color:#777;">Simulation: Le retrait sera traité sous 24h</p>
             </div>
         </main>
     </div>
@@ -81,54 +112,49 @@
             await requireAuth();
             if (!userData) return;
 
-            document.getElementById('currentBalance').textContent = (userData.balance || 0) + ' FCFA';
+            if (userData.role !== 'creator') {
+                window.location.href = 'dashboard.html';
+                return;
+            }
 
-            const sections = userData.role === 'creator' ? [
-                { id: 'dashboard', url: 'creator-dashboard.html', icon: 'fas fa-home', label: 'Accueil' },
-                { id: 'services', url: 'services.html', icon: 'fas fa-list', label: 'Services' },
-                { id: 'orders', url: 'creator-orders.html', icon: 'fas fa-shopping-bag', label: 'Commandes' },
-                { id: 'followers', url: 'followers.html', icon: 'fas fa-users', label: 'Abonnés' }
-            ] : [
+            const sections = [
                 { id: 'dashboard', url: 'dashboard.html', icon: 'fas fa-home', label: 'Accueil' },
-                { id: 'explore', url: 'explore.html', icon: 'fas fa-search', label: 'Explorer' },
-                { id: 'cart', url: 'cart.html', icon: 'fas fa-shopping-cart', label: 'Panier' },
-                { id: 'orders', url: 'orders.html', icon: 'fas fa-history', label: 'Achats' },
-                { id: 'favorites', url: 'favorites.html', icon: 'fas fa-heart', label: 'Favoris' }
+                { id: 'services', url: 'services.html', icon: 'fas fa-list', label: 'Services' },
+                { id: 'orders', url: 'orders.html', icon: 'fas fa-shopping-bag', label: 'Commandes' },
+                { id: 'followers', url: 'followers.html', icon: 'fas fa-users', label: 'Abonnés' }
             ];
             document.getElementById('mobileNavList').innerHTML = sections.map(s => `
                 <li><a href="${s.url}" class=""><i class="${s.icon}"></i> <span>${s.label}</span></a></li>
             `).join('');
-        });
 
-        document.getElementById('withdrawForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const amount = parseFloat(document.getElementById('amount').value);
-            const method = document.getElementById('method').value;
-            const account = document.getElementById('account').value;
+            document.getElementById('withdrawForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const amount = parseInt(document.getElementById('amount').value);
+                const phone = document.getElementById('phone').value;
+                const country = document.getElementById('country').value;
 
-            if (!amount || !method || !account) {
-                showToast('Veuillez remplir tous les champs', 'error');
-                return;
-            }
+                if (!amount || !phone || !country) {
+                    showToast('Veuillez remplir tous les champs', 'error');
+                    return;
+                }
 
-            if (amount > (userData.balance || 0)) {
-                showToast('Solde insuffisant', 'error');
-                return;
-            }
+                if (amount > (userData.balance || 0)) {
+                    showToast('Solde insuffisant', 'error');
+                    return;
+                }
 
-            showToast('Demande de retrait en cours...', 'info');
-            setTimeout(async () => {
-                // Simuler le retrait
-                const userRef = db.collection('users').doc(currentUser.uid);
-                await userRef.update({
-                    balance: firebase.firestore.FieldValue.increment(-amount)
-                });
-                userData.balance -= amount;
-                showToast(`Demande de retrait de ${amount} FCFA soumise avec succès`, 'success');
-                setTimeout(() => {
-                    window.location.href = userData.role === 'creator' ? 'creator-dashboard.html' : 'dashboard.html';
+                showToast('Traitement en cours...', 'info');
+                setTimeout(async () => {
+                    await db.collection('users').doc(currentUser.uid).update({
+                        balance: firebase.firestore.FieldValue.increment(-amount)
+                    });
+                    userData.balance -= amount;
+                    showToast(`Retrait de ${amount} FCFA réussi !`, 'success');
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 2000);
                 }, 2000);
-            }, 2000);
+            });
         });
     </script>
 </body>

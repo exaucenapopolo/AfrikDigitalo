@@ -8,92 +8,158 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <style>
-        .filter-bar {
+        .filters {
             background: white;
-            border-radius: 10px;
-            padding: 15px 20px;
-            margin-bottom: 20px;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
             display: flex;
             flex-wrap: wrap;
             gap: 15px;
             align-items: center;
-            box-shadow: var(--shadow-sm);
         }
         .filter-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .filter-group label {
-            font-weight: 600;
-            color: var(--secondary);
+            flex: 1;
+            min-width: 200px;
         }
         .filter-group select, .filter-group input {
-            padding: 8px 12px;
-            border: 1px solid var(--gray-light);
-            border-radius: 5px;
+            width: 100%;
+            padding: 10px;
+            border: 2px solid var(--gray-light);
+            border-radius: 10px;
+            font-size: 1rem;
         }
-        .filter-group button {
-            padding: 8px 20px;
-        }
-        .explore-grid {
+        .services-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 20px;
         }
         @media (max-width: 768px) {
-            .explore-grid {
+            .services-grid {
                 grid-template-columns: 1fr;
             }
+        }
+        .service-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+            position: relative;
+        }
+        .service-card:hover {
+            transform: translateY(-5px);
+        }
+        .service-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .service-image:hover {
+            transform: scale(1.02);
+        }
+        .service-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-buy {
+            background: linear-gradient(135deg, var(--primary), #FF8A5C);
+            color: white;
+        }
+        .btn-buy:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255,107,53,0.3);
+        }
+        .btn-info {
+            background: linear-gradient(135deg, var(--accent-blue), #5FA8D3);
+            color: white;
+        }
+        .btn-info:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52,152,219,0.3);
+        }
+        .btn-warning {
+            background: linear-gradient(135deg, var(--warning), #F5B041);
+            color: white;
+        }
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(243,156,18,0.3);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-green), #2ECC71);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(39,174,96,0.3);
+        }
+        .modal-image {
+            max-width: 100%;
+            max-height: 80vh;
+            border-radius: 10px;
         }
     </style>
 </head>
 <body>
     <header class="main-header">
         <div class="logo">
-            <img src="https://raw.githubusercontent.com/exaucenapopolo/AfrikDigitalo/refs/heads/main/Photo/ezgif-693a681e148aad8a.gif" alt="AfrikDigitalo">
+            <img src="https://raw.githubusercontent.com/exaucenapopolo/AfrikDigitalo/refs/heads/main/Photo/ezgif-693a681e148aad8a.gif" alt="AfrikDigitalo" style="height: 40px;">
             <span>Afrik<span class="highlight">Digitalo</span></span>
         </div>
         <div class="header-user">
-            <button class="header-icon-btn" id="settingsBtn" onclick="location.href='settings.html'"><i class="fas fa-cog"></i></button>
+            <button class="header-icon-btn" onclick="location.href='settings.html'"><i class="fas fa-cog"></i></button>
             <img id="headerAvatar" src="https://randomuser.me/api/portraits/lego/1.jpg" alt="Avatar" onclick="location.href='profile.html'">
         </div>
     </header>
 
     <div class="dashboard">
-        <aside class="sidebar" id="sidebar">
-            <nav><ul id="sidebarNav"></ul></nav>
-        </aside>
-        <main class="main-content">
-            <div id="verificationBanner" class="verification-banner" style="display: none;"></div>
-
-            <h2>Explorer les services</h2>
-
-            <!-- Barre de filtres -->
-            <div class="filter-bar">
-                <div class="filter-group">
-                    <label>Catégorie:</label>
-                    <select id="filterCategory">
-                        <option value="">Toutes</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label>Prix max:</label>
-                    <input type="number" id="filterPrice" placeholder="FCFA">
-                </div>
-                <div class="filter-group">
-                    <label>Trier par:</label>
-                    <select id="filterSort">
-                        <option value="recent">Plus récents</option>
-                        <option value="old">Plus anciens</option>
-                        <option value="priceAsc">Prix croissant</option>
-                        <option value="priceDesc">Prix décroissant</option>
-                    </select>
-                </div>
-                <button class="btn btn-primary" onclick="applyFilters()">Filtrer</button>
+        <main class="main-content" id="mainContent">
+            <div id="verificationBanner" class="verification-banner" style="display: none;">
+                <p><i class="fas fa-exclamation-triangle"></i> Votre adresse email n'est pas encore vérifiée.</p>
+                <button id="resendVerificationBtn">Renvoyer l'email</button>
             </div>
 
-            <div id="exploreList" class="explore-grid">Chargement...</div>
+            <h2>Explorez les services</h2>
+
+            <div class="filters">
+                <div class="filter-group">
+                    <select id="categoryFilter">
+                        <option value="">Toutes catégories</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <select id="sortFilter">
+                        <option value="recent">Plus récents</option>
+                        <option value="oldest">Plus anciens</option>
+                        <option value="priceAsc">Prix croissant</option>
+                        <option value="priceDesc">Prix décroissant</option>
+                        <option value="popular">Plus populaires</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <input type="text" id="searchFilter" placeholder="Rechercher...">
+                </div>
+            </div>
+
+            <div id="exploreList" class="services-grid">Chargement...</div>
         </main>
     </div>
 
@@ -101,11 +167,19 @@
         <ul id="mobileNavList"></ul>
     </nav>
 
-    <!-- Modal détails service -->
+    <!-- Modal pour afficher les détails d'un service -->
     <div class="modal" id="serviceDetailModal">
-        <div class="modal-content" style="max-width: 700px;">
+        <div class="modal-content" style="max-width: 800px;">
             <span class="modal-close" onclick="closeServiceModal()">&times;</span>
             <div id="serviceDetailContent"></div>
+        </div>
+    </div>
+
+    <!-- Modal pour afficher une image en grand -->
+    <div class="modal" id="imageModal">
+        <div class="modal-content" style="background: transparent; box-shadow: none; max-width: 90%;">
+            <span class="modal-close" onclick="closeImageModal()" style="color: white;">&times;</span>
+            <img id="fullImage" class="modal-image" src="">
         </div>
     </div>
 
@@ -136,16 +210,15 @@
             if (!userData) return;
 
             if (userData.role !== 'buyer') {
-                window.location.href = 'creator-dashboard.html';
+                window.location.href = 'dashboard.html';
                 return;
             }
 
-            // Navigation mobile
             const sections = [
                 { id: 'dashboard', url: 'dashboard.html', icon: 'fas fa-home', label: 'Accueil' },
                 { id: 'explore', url: 'explore.html', icon: 'fas fa-search', label: 'Explorer' },
                 { id: 'cart', url: 'cart.html', icon: 'fas fa-shopping-cart', label: 'Panier' },
-                { id: 'orders', url: 'orders.html', icon: 'fas fa-history', label: 'Mes achats' },
+                { id: 'orders', url: 'orders.html', icon: 'fas fa-history', label: 'Achats' },
                 { id: 'favorites', url: 'favorites.html', icon: 'fas fa-heart', label: 'Favoris' }
             ];
             document.getElementById('mobileNavList').innerHTML = sections.map(s => `
@@ -153,89 +226,103 @@
             `).join('');
 
             await loadServices();
-            populateCategories();
+            setupFilters();
         });
 
         async function loadServices() {
             const snapshot = await db.collection('services').get();
             allServices = [];
+            categories = new Set();
             for (const doc of snapshot.docs) {
                 const s = doc.data();
-                const creatorDoc = await db.collection('users').doc(s.creatorId).get();
-                const creator = creatorDoc.data();
-                allServices.push({
-                    id: doc.id,
-                    ...s,
-                    creatorName: creator ? creator.name : 'Inconnu',
-                    creatorAvatar: creator ? (creator.photoURL || 'https://randomuser.me/api/portraits/lego/1.jpg') : 'https://randomuser.me/api/portraits/lego/1.jpg'
-                });
+                s.id = doc.id;
+                allServices.push(s);
+                if (s.category) categories.add(s.category);
             }
+            // Remplir le filtre catégorie
+            const catSelect = document.getElementById('categoryFilter');
+            catSelect.innerHTML = '<option value="">Toutes catégories</option>' + 
+                Array.from(categories).map(c => `<option value="${c}">${c}</option>`).join('');
             applyFilters();
         }
 
-        function populateCategories() {
-            const cats = [...new Set(allServices.map(s => s.category))];
-            const select = document.getElementById('filterCategory');
-            cats.forEach(c => {
-                select.innerHTML += `<option value="${c}">${c}</option>`;
-            });
+        function setupFilters() {
+            document.getElementById('categoryFilter').addEventListener('change', applyFilters);
+            document.getElementById('sortFilter').addEventListener('change', applyFilters);
+            document.getElementById('searchFilter').addEventListener('input', applyFilters);
         }
 
         function applyFilters() {
-            const cat = document.getElementById('filterCategory').value;
-            const priceMax = parseFloat(document.getElementById('filterPrice').value) || Infinity;
-            const sort = document.getElementById('filterSort').value;
+            const category = document.getElementById('categoryFilter').value;
+            const sort = document.getElementById('sortFilter').value;
+            const search = document.getElementById('searchFilter').value.toLowerCase();
 
-            let filtered = allServices.filter(s => 
-                (cat === '' || s.category === cat) && s.price <= priceMax
-            );
+            let filtered = allServices.filter(s => {
+                if (category && s.category !== category) return false;
+                if (search && !s.title.toLowerCase().includes(search) && !s.description.toLowerCase().includes(search)) return false;
+                return true;
+            });
 
             // Tri
             if (sort === 'recent') {
-                filtered.sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
-            } else if (sort === 'old') {
-                filtered.sort((a, b) => (a.createdAt?.toDate() || 0) - (b.createdAt?.toDate() || 0));
+                filtered.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+            } else if (sort === 'oldest') {
+                filtered.sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
             } else if (sort === 'priceAsc') {
                 filtered.sort((a, b) => a.price - b.price);
             } else if (sort === 'priceDesc') {
                 filtered.sort((a, b) => b.price - a.price);
+            } else if (sort === 'popular') {
+                // On trie par nombre de commandes (à implémenter plus tard)
             }
 
             displayServices(filtered);
         }
 
-        function displayServices(services) {
+        async function displayServices(services) {
             const listDiv = document.getElementById('exploreList');
             if (services.length === 0) {
                 listDiv.innerHTML = '<p>Aucun service trouvé.</p>';
                 return;
             }
+
             let html = '';
-            services.forEach(s => {
-                const imageHtml = s.images && s.images.length > 0 ? `<img src="${s.images[0]}" alt="${s.title}" onclick="showImageModal('${s.images[0]}')">` : '';
+            for (const s of services) {
+                const creatorDoc = await db.collection('users').doc(s.creatorId).get();
+                const creator = creatorDoc.data();
+                const creatorName = creator ? creator.name : 'Inconnu';
+                const creatorAvatar = creator ? (creator.photoURL || 'https://randomuser.me/api/portraits/lego/1.jpg') : 'https://randomuser.me/api/portraits/lego/1.jpg';
+                
+                // Compter les commandes pour ce service
+                const orderSnap = await db.collection('orders').where('serviceId', '==', s.id).get();
+                const orderCount = orderSnap.size;
+
+                const imageHtml = s.images && s.images.length > 0 ? 
+                    `<img src="${s.images[0]}" class="service-image" onclick="showImage('${s.images[0]}')">` : '';
+
                 html += `
                     <div class="service-card">
                         ${imageHtml}
                         <h3>${s.title}</h3>
-                        <p>${s.description.substring(0, 80)}... <button class="btn-link" onclick="showServiceDetails('${s.id}')">Voir plus</button></p>
-                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
-                            <img src="${s.creatorAvatar}" style="width:30px; height:30px; border-radius:50%; object-fit:cover; cursor:pointer;" onclick="location.href='vendor-profile.html?id=${s.creatorId}'">
-                            <a href="vendor-profile.html?id=${s.creatorId}" style="color: var(--primary);">${s.creatorName}</a>
+                        <p>${s.description.substring(0, 100)}... <button class="btn-link" onclick="showServiceDetails('${s.id}')">Voir plus</button></p>
+                        <div style="display:flex; align-items:center; gap:10px; margin:10px 0;">
+                            <img src="${creatorAvatar}" style="width:30px; height:30px; border-radius:50%; object-fit:cover; cursor:pointer;" onclick="location.href='vendor-profile.html?id=${s.creatorId}'">
+                            <a href="vendor-profile.html?id=${s.creatorId}" style="color: var(--primary);">${creatorName}</a>
                         </div>
+                        <div><i class="fas fa-shopping-bag"></i> ${orderCount} vendus</div>
                         <div class="service-price">${s.price} FCFA</div>
                         <div class="service-actions">
-                            <button class="btn btn-success" onclick="addToCart('${s.id}')"><i class="fas fa-cart-plus"></i> Ajouter</button>
+                            <button class="btn btn-buy" onclick="addToCart('${s.id}')"><i class="fas fa-cart-plus"></i> Ajouter</button>
                             <button class="btn btn-info" onclick="contactCreator('${s.creatorId}')"><i class="fas fa-envelope"></i> Contacter</button>
                             <button class="btn btn-warning" onclick="addToFavorites('${s.id}')"><i class="fas fa-heart"></i> Favori</button>
                             <button class="btn btn-primary" onclick="followCreator('${s.creatorId}')"><i class="fas fa-user-plus"></i> Suivre</button>
                         </div>
                     </div>
                 `;
-            });
+            }
             listDiv.innerHTML = html;
         }
 
-        // Fonctions globales
         window.showServiceDetails = async function(serviceId) {
             const doc = await db.collection('services').doc(serviceId).get();
             if (!doc.exists) return;
@@ -247,7 +334,7 @@
             if (s.images && s.images.length) {
                 imagesHtml = '<div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px;">';
                 s.images.forEach(url => {
-                    imagesHtml += `<img src="${url}" style="width:200px; height:150px; object-fit:cover; border-radius:5px; cursor:pointer;" onclick="showImageModal('${url}')">`;
+                    imagesHtml += `<img src="${url}" style="width:200px; height:150px; object-fit:cover; border-radius:10px; cursor:pointer;" onclick="showImage('${url}')">`;
                 });
                 imagesHtml += '</div>';
             }
@@ -265,7 +352,8 @@
                 });
             }
 
-            document.getElementById('serviceDetailContent').innerHTML = `
+            const modalContent = document.getElementById('serviceDetailContent');
+            modalContent.innerHTML = `
                 <h3>${s.title}</h3>
                 ${imagesHtml}
                 <p><strong>Description:</strong> ${s.description}</p>
@@ -275,7 +363,7 @@
                 <p><strong>Vendeur:</strong> <a href="vendor-profile.html?id=${s.creatorId}" style="color: var(--primary);">${creator ? creator.name : 'Inconnu'}</a></p>
                 ${faqHtml}
                 <div style="margin-top:20px; display:flex; gap:10px;">
-                    <button class="btn btn-success" onclick="addToCart('${serviceId}')">Ajouter au panier</button>
+                    <button class="btn btn-buy" onclick="addToCart('${serviceId}')">Ajouter au panier</button>
                     <button class="btn btn-warning" onclick="addToFavorites('${serviceId}')">Ajouter aux favoris</button>
                 </div>
             `;
@@ -286,21 +374,13 @@
             document.getElementById('serviceDetailModal').classList.remove('active');
         };
 
-        window.showImageModal = function(url) {
-            // On peut ouvrir une modal simple avec l'image en grand
-            const modal = document.createElement('div');
-            modal.style.position = 'fixed';
-            modal.style.top = '0';
-            modal.style.left = '0';
-            modal.style.width = '100%';
-            modal.style.height = '100%';
-            modal.style.backgroundColor = 'rgba(0,0,0,0.8)';
-            modal.style.zIndex = '3000';
-            modal.style.display = 'flex';
-            modal.style.justifyContent = 'center';
-            modal.style.alignItems = 'center';
-            modal.innerHTML = `<img src="${url}" style="max-width:90%; max-height:90%; border-radius:10px;"><span style="position:absolute; top:20px; right:30px; color:white; font-size:40px; cursor:pointer;" onclick="this.parentElement.remove()">&times;</span>`;
-            document.body.appendChild(modal);
+        window.showImage = function(url) {
+            document.getElementById('fullImage').src = url;
+            document.getElementById('imageModal').classList.add('active');
+        };
+
+        window.closeImageModal = function() {
+            document.getElementById('imageModal').classList.remove('active');
         };
 
         window.addToCart = async function(serviceId) {
